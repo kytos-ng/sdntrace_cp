@@ -223,7 +223,7 @@ class TraceManager(object):
             result['result'] = {'trace_id': t_id}
         else:
             result['result'] = {'Error': 'Invalid Switch'}
-        return json.dumps(result)
+        return json.dumps(result), 200, {'Content-Type' : 'application/json; charset=utf-8'}
 
     def rest_get_result_cp(self, trace_id):
         """Usedf for the REST GET call
@@ -231,4 +231,4 @@ class TraceManager(object):
         Returns:
             get_result in JSON format
         """
-        return json.dumps(self.get_result(trace_id))
+        return json.dumps(self.get_result(trace_id)), 200, {'Content-Type' : 'application/json; charset=utf-8'}
