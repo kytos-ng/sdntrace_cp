@@ -4,7 +4,7 @@
   "name": "sdntrace_cp",
   "description": "An OpenFlow Path Tracing",
   "version": "0.1",
-  "napp_dependencies": ["amlight/sdntrace"],
+  "napp_dependencies": ["amlight/sdntrace", "amlight/kytos_flow_manager"],
   "license": "GPL3.0",
   "tags": ["experimental", "coloring"],
   "url": "http://github.com/amlight/kytos/"
