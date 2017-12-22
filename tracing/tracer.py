@@ -6,13 +6,14 @@ import time
 import copy
 from kytos.core import log
 from kytos.core.switch import Interface
-from napps.amlight.sdntrace_cp.tracing.rest import FormatRest
+from napps.amlight.sdntrace.tracing.rest import FormatRest
+from napps.amlight.sdntrace.tracing.tracer import TracePath as DPTracePath
 from napps.amlight.sdntrace.shared.switches import Switches
 from napps.amlight.sdntrace.shared.colors import Colors
 from napps.amlight.sdntrace import settings
 
 
-class TracePath(object):
+class TracePath(DPTracePath):
     """
         Tracer main class - responsible for running traces.
         It is composed of two parts:
@@ -41,33 +42,6 @@ class TracePath(object):
         'nw_proto': 'ip_proto',
     }
 
-    def __init__(self, trace_manager, r_id, initial_entries):
-        """
-        Args:
-            trace_manager: main TraceManager class - needed because Kytos.controller
-            r_id: request ID
-            initial_entries: user entries for trace
-        """
-        self.switches = Switches()
-        self.trace_mgr = trace_manager
-        self.id = r_id
-        self.init_entries = initial_entries
-
-        self.trace_result = []
-        self.trace_ended = False
-        self.init_switch = self.get_init_switch()
-        self.rest = FormatRest()
-        self.mydomain = settings.MY_DOMAIN
-
-    def get_init_switch(self):
-        """Get the Switch class of the switch requested by user
-
-        Returns:
-            Switch class
-        """
-        dpid = self.init_entries['trace']['switch']['dpid']
-        return Switches().get_switch(dpid)
-
     def tracepath(self):
         """
             Do the trace path
@@ -91,10 +65,10 @@ class TracePath(object):
                                  dpid=switch.dpid,
                                  port=entries['trace']['switch']['in_port'])
         entries = self.convert_entries(entries)
-        # A loop waiting for 'trace_ended'. It changes to True when reaches timeout
+
+        # A loop waiting for 'trace_ended'.
+        # It changes to True when reaches timeout
         while not self.trace_ended:
-            #in_port, probe_pkt = generate_trace_pkt(entries, color, self.id,
-            #                                        self.mydomain)
             switch = Switches().get_switch(entries['dpid'])
             result, entries = self.send_trace_probe(switch, entries)
             if result == 'timeout':
@@ -109,12 +83,10 @@ class TracePath(object):
                                              reason='loop')
                     self.trace_ended = True
                     break
-                # If we got here, that means we need to keep going.
-                #entries, color, switch = prepare_next_packet(entries, result,
-                #                                             packet_in)
 
         # Add final result to trace_results_queue
-        t_result = {"request_id": self.id, "result": self.trace_result,
+        t_result = {"request_id": self.id,
+                    "result": self.trace_result,
                     "start_time": str(self.rest.start_time),
                     "total_time": self.rest.get_time(),
                     "request": self.init_entries}
@@ -137,8 +109,6 @@ class TracePath(object):
         timeout_control = 0  # Controls the timeout of 1 second and two tries
 
         log.info('Entries %s' % entries)
-        # send_packet_out(self.trace_mgr.controller, switch, in_port, probe_pkt.data)
-        #send_packet_out(self.trace_mgr.controller, switch, in_port, probe_pkt)
         flow, actions, port = switch.match_and_apply(entries)
         log.info('Flow %s' % flow)
         if not flow:
@@ -156,30 +126,6 @@ class TracePath(object):
             return 'timeout', None
 
         return {'dpid': entries['dpid'], "port": entries['in_port']}, entries
-
-        # while True:
-        #     time.sleep(0.5)  # Wait 0.5 second before querying for PacketIns
-        #     timeout_control += 1
-        #
-        #     if timeout_control >= 3:
-        #         return 'timeout', False
-        #
-        #     # Check if there is any Probe PacketIn in the queue
-        #     for pIn in self.trace_mgr.trace_pktIn:
-        #         # Let's look for traces with our self.id
-        #         # Each entry has the following format:
-        #         # (pktIn_dpid, pktIn_port, TraceMsg, pkt, ev)
-        #         # packetIn_data_request_id is the request id
-        #         # of the packetIn.data.
-        #
-        #         msg = pIn[2]
-        #         if self.id == msg.request_id:
-        #             self.clear_trace_pkt_in()
-        #             return {'dpid': pIn[0], "port": pIn[1]}, pIn[4]
-        #         else:
-        #             log.warning('Sending PacketOut Again')
-        #             # send_packet_out(self.trace_mgr.controller, switch, in_port, probe_pkt.data)
-        #             send_packet_out(self.trace_mgr.controller, switch, in_port, probe_pkt)
 
     @staticmethod
     def convert_entries(entries):
@@ -207,21 +153,3 @@ class TracePath(object):
             if isinstance(endpoint, Interface):
                 return endpoint
         return None
-
-    def clear_trace_pkt_in(self):
-        """ Once the probe PacketIn was processed, delete it from queue """
-        for pIn in self.trace_mgr.trace_pktIn:
-            msg = pIn[2]
-            if self.id == msg.request_id:
-                self.trace_mgr.trace_pktIn.remove(pIn)
-
-    def check_loop(self):
-        """ Check if there are equal entries """
-        i = 0
-        last = len(self.trace_result) - 1
-        while i < last:
-            if self.trace_result[i]['dpid'] == self.trace_result[last]['dpid']:
-                if self.trace_result[i]['port'] == self.trace_result[last]['port']:
-                    return True
-            i += 1
-        return 0
