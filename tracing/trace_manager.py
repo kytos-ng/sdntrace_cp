@@ -26,6 +26,17 @@ class TraceManager(DPTraceManager):
         self.topology = None
         super(TraceManager, self).__init__(*args, **kwargs)
 
+    def _spawn_trace(self, trace_id, entries):
+        """Once a request is found by the run_traces method,
+        instantiate a TracePath class and runs the tracepath
+
+        Args:
+            trace_id: trace request id
+        """
+        log.info("Creating thread to trace request id %s..." % trace_id)
+        tracer = TracePath(self, trace_id, entries)
+        tracer.tracepath()
+
     @staticmethod
     def is_entry_valid(entries):
         """ Make sure the switch selected by the user exists and
