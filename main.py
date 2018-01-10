@@ -3,8 +3,10 @@
 An OpenFlow Path Trace
 """
 
-from kytos.core import KytosNApp, log
+from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import listen_to
+
+from flask import request
 from pyof.foundation.network_types import Ethernet
 
 from napps.amlight.sdntrace import settings
@@ -31,11 +33,11 @@ class Main(KytosNApp):
         self.tracing = TraceManager(self.controller)
 
     @rest('/trace', methods=['PUT'])
-    def rest_new_trace(self):
+    def new_trace(self):
         return self.tracing.rest_new_trace(request.get_json())
 
     @rest('/trace/<trace_id>')
-    def rest_get_result(self, trace_id):
+    def get_result(self, trace_id):
         return self.tracing.rest_get_result(trace_id)
 
     def execute(self):
@@ -49,3 +51,7 @@ class Main(KytosNApp):
 
         """
         pass
+
+    @listen_to('kytos/topology.updated')
+    def update_topo(self, event):
+        self.tracing.topology = event.content['topology']

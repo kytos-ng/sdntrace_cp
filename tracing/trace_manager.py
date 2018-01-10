@@ -21,6 +21,11 @@ class TraceManager(DPTraceManager):
         manage all trace requests.
     """
 
+    def __init__(self, *args, **kwargs):
+        # Topology
+        self.topology = None
+        super(TraceManager, self).__init__(*args, **kwargs)
+
     @staticmethod
     def is_entry_valid(entries):
         """ Make sure the switch selected by the user exists and
@@ -38,3 +43,15 @@ class TraceManager(DPTraceManager):
         if isinstance(init_switch, bool):
             return False
         return True
+
+    def find_endpoint(self, switch, port):
+        """ Finds where switch/port is connected. If it is another switch, 
+        returns the interface it is connected to, otherwise returns None """
+        interface = '%s:%s' % (switch.dpid, port)
+        link = self.topology.get_link(interface)
+        if link:
+            if interface == link[0]:
+                return link[1]
+            else:
+                return link[0]
+        return None

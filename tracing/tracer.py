@@ -6,6 +6,7 @@ import time
 import copy
 from kytos.core import log
 from kytos.core.switch import Interface
+from kytos.core.helpers import listen_to
 from napps.amlight.sdntrace.tracing.rest import FormatRest
 from napps.amlight.sdntrace.tracing.tracer import TracePath as DPTracePath
 from napps.amlight.sdntrace.shared.switches import Switches
@@ -108,20 +109,20 @@ class TracePath(DPTracePath):
         """
         timeout_control = 0  # Controls the timeout of 1 second and two tries
 
-        log.info('Entries %s' % entries)
-        flow, actions, port = switch.match_and_apply(entries)
-        log.info('Flow %s' % flow)
+        flow, entries, port = switch.match_and_apply(entries)
         if not flow:
             return 'timeout', None
 
         if not port:
             return 'timeout', None
 
-        endpoint = self.find_endpoint(switch, port)
-        log.info('Endpoint %s' % endpoint)
+        endpoint = self.trace_mgr.find_endpoint(switch, port)
         if endpoint:
-            entries['dpid'] = endpoint.switch.dpid
-            entries['in_port'] = endpoint.port_number
+            parts = endpoint.split(':')
+            dpid = ':'.join(parts[:8])
+            port = parts[-1]
+            entries['dpid'] = dpid
+            entries['in_port'] = port
         else:
             return 'timeout', None
 
@@ -144,12 +145,3 @@ class TracePath(DPTracePath):
                     new_entries[field] = value
         return new_entries
 
-    @staticmethod
-    def find_endpoint(switch, port):
-        """ Finds where switch/port is connected. If it is another switch, 
-        returns the interface it is connected to, otherwise returns None """
-        interface = switch.interfaces[port]
-        for endpoint, _ in interface.endpoints:
-            if isinstance(endpoint, Interface):
-                return endpoint
-        return None
