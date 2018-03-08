@@ -5,7 +5,7 @@
 import time
 import copy
 from kytos.core import log
-from kytos.core.switch import Interface
+from kytos.core.interface import Interface
 from kytos.core.helpers import listen_to
 from napps.amlight.sdntrace.tracing.rest import FormatRest
 from napps.amlight.sdntrace.tracing.tracer import TracePath as DPTracePath
