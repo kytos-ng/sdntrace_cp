@@ -58,11 +58,10 @@ class TraceManager(DPTraceManager):
     def find_endpoint(self, switch, port):
         """ Finds where switch/port is connected. If it is another switch, 
         returns the interface it is connected to, otherwise returns None """
-        interface = '%s:%s' % (switch.dpid, port)
-        link = self.topology.get_link(interface)
-        if link:
-            if interface == link[0]:
-                return link[1]
+        interface = switch.get_interface_by_port_no(port)
+        if interface.link:
+            if interface == interface.link.endpoint_a:
+                return interface.link.endpoint_b
             else:
-                return link[0]
+                return interface.link.endpoint_a
         return None

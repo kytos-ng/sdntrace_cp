@@ -116,11 +116,8 @@ class TracePath(DPTracePath):
 
         endpoint = self.trace_mgr.find_endpoint(switch, port)
         if endpoint:
-            parts = endpoint.split(':')
-            dpid = ':'.join(parts[:8])
-            port = parts[-1]
-            entries['dpid'] = dpid
-            entries['in_port'] = port
+            entries['dpid'] = endpoint.switch.dpid
+            entries['in_port'] = endpoint.port_number
         else:
             return 'timeout', None
 
