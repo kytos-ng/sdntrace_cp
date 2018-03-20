@@ -138,5 +138,7 @@ class TracePath(DPTracePath):
                     new_entries[TracePath.TRANSLATE_NAMES[field]] = value
                 else:
                     new_entries[field] = value
+        if 'vlan_vid' in new_entries:
+            new_entries['vlan_vid'] = [new_entries['vlan_vid']]
         return new_entries
 
