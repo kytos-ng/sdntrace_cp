@@ -12,6 +12,7 @@ from napps.amlight.sdntrace.tracing.tracer import TracePath as DPTracePath
 from napps.amlight.sdntrace.shared.switches import Switches
 from napps.amlight.sdntrace.shared.colors import Colors
 from napps.amlight.sdntrace import settings
+from napps.amlight.kytos_flow_manager.main import Main as FlowManager
 
 
 class TracePath(DPTracePath):
@@ -109,11 +110,8 @@ class TracePath(DPTracePath):
         """
         timeout_control = 0  # Controls the timeout of 1 second and two tries
 
-        flow, entries, port = switch.match_and_apply(entries)
-        if not flow:
-            return 'timeout', None
-
-        if not port:
+        flow, entries, port = FlowManager.match_and_apply(switch, entries)
+        if not flow or not port:
             return 'timeout', None
 
         endpoint = self.trace_mgr.find_endpoint(switch, port)
