@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: amlight/sdntrace_cp
+  version: '0.1'
+  description: An OpenFlow Path Tracing on Control Plane
+paths:
+  /api/amlight/sdntrace_cp/trace:
+    put:
+      summary: Trace a path
+      description: Trace a path starting with the switch given with the parameters given. The trace is done entirely in control plane.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                trace:
+                  type: object
+                  properties:
+                    switch:
+                      type: object
+                      properties:
+                        dpid:
+                          type: string
+                          description: Initial switch datapath ID
+                          example: 00:00:00:00:00:00:00:01
+                        in_port:
+                          type: integer
+                          description: Starting incoming port
+                          example: 1
+                    eth:
+                      type: object
+                      properties:
+                        dl_vlan:
+                          type: integer
+                          description: VLAN ID
+                          example: 100
+                        dl_type:
+                          type: string
+                          description: Ethernet type
+                          example: '0x8100'
+                        dl_src:
+                          type: string
+                          description: Source MAC address
+                          example: '01:23:45:67:89:ab'
+                        dl_dst:
+                          type: string
+                          description: Destination MAC address
+                          example: '23:45:67:89:ab:cd'
+                    ip:
+                      type: object
+                      properties:
+                        nw_src:
+                          type: string
+                          description: Source IP
+                          example: 192.168.20.21
+                        nw_dst:
+                          type: string
+                          description: Destination IP
+                          example: 192.168.25.123
+                        nw_proto:
+                          type: integer
+                          description: IP protocol
+                          example: 6
+                        nw_tos:
+                          type: integer
+                          description: IP TOS
+                          example: 0
+                    tp:
+                      type: object
+                      properties:
+                        tp_src:
+                          type: integer
+                          description: Source transport port
+                          example: 8761
+                        tp_dst:
+                          type: integer
+                          description: Destination transport port
+                          example: 80
+      responses:
+        200:
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      trace_id:
+                        type: integer
+                        description: ID of the trace executed
+                        example: 30001
+  /api/amlight/sdntrace_cp/trace/{trace_id}:
+    get:
+      summary: Get the result of a trace
+      parameters:
+        - name: trace_id
+          schema:
+            type: integer
+          required: true
+          description: Trace ID
+          in: path
+      responses:
+        200:
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    type: object
+                  request_id:
+                    type: integer
+                    description: ID of the trace
+                    example: 30001
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        dpid:
+                          type: string
+                          description: Datapath ID of the switch
+                          example: 00:00:00:00:00:00:00:01
+                        port:
+                          type: integer
+                          description: Incoming port of the packet in this switch
+                          example: 1
+                        time:
+                          type: string
+                          description: Start time in the first switch, elapsed time otherwise
+                          example: "2018-03-22 14:50:56.888483"
+                        type:
+                          type: string
+                          description: Type of this step. May be starting, trace, last or loop.
+                          example: trace
+                  start_time:
+                    type: string
+                    description: Start time of the trace
+                    example: "2018-03-22 14:50:56.888483"
+                  total_time:
+                    type: string
+                    description: "Elapsed time on this trace"
+                    example: "0:00:00.256709"
