@@ -1,6 +1,6 @@
 Overview
 ========
-An OpenFlow Path Trace for Kytos SDN controller
+Run tracepaths on OpenFlow in the Control Plane
 
 Requirements
 ============
