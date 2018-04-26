@@ -73,6 +73,8 @@ class Main(KytosNApp):
                                'port': entries['in_port'],
                                'time': str(datetime.now()),
                                'type': trace_type}}
+            if 'vlan_vid' in entries:
+                trace_step['in'].update({'vlan': entries['vlan_vid'][0]})
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
             result = self.trace_step(switch, entries)
             if result:
