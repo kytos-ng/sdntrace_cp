@@ -30,18 +30,21 @@ class Automate:
             else:
                 controller_port = Port13.OFPP_CONTROLLER
 
-            for flow in switch.metadata['generic_flows']:
-                action_ok = False
-                in_port_ok = False
-                if 'in_port' in flow.match and flow.match['in_port'] != 0:
-                    in_port_ok = True
-                if in_port_ok:
-                    for action in flow.actions:
-                        if action.action_type == 'output' \
-                                and action.port != controller_port:
-                            action_ok = True
-                if action_ok:
-                    all_flows[switch].append(flow)
+            try:
+                for flow in switch.generic_flows:
+                    action_ok = False
+                    in_port_ok = False
+                    if 'in_port' in flow.match and flow.match['in_port'] != 0:
+                        in_port_ok = True
+                    if in_port_ok:
+                        for action in flow.actions:
+                            if action.action_type == 'output' \
+                                    and action.port != controller_port:
+                                action_ok = True
+                    if action_ok:
+                        all_flows[switch].append(flow)
+            except AttributeError:
+                pass
 
         for switch, flows in all_flows.items():
             for flow in flows:
@@ -62,7 +65,8 @@ class Automate:
                     }
                 }
                 result = self._tracer.tracepath(entries)
-                circuits.append(format_result(result))
+                circuits.append({'circuit': format_result(result),
+                                 'entries': entries})
 
         self._circuits = clean_circuits(circuits, self._tracer.controller)
 
