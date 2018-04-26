@@ -1,5 +1,7 @@
 """Automate circuit traces."""
 
+import time
+import requests
 from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
 from napps.amlight.sdntrace_cp.utils import format_result, clean_circuits
@@ -88,3 +90,32 @@ class Automate:
 
     def check_trace(self, trace):
         pass
+
+    def run_important_traces(self):
+        try:
+            important_circuits = settings.IMPORTANT_CIRCUITS
+        except AttributeError:
+            return
+
+        for circuit in important_circuits:
+            entries = {
+                'trace': {
+                    'switch': {
+                        'dpid': circuit['dpid_a'],
+                        'in_port': circuit['port_a']
+                    },
+                    'eth': {
+                        'dl_vlan': circuit['vlan_a']
+                    }
+                }
+            }
+            result = requests.put('http://localhost:8181/api/amlight/sdntrace/trace', json=entries)
+            trace = result.json()
+            trace_id = trace['result']['trace_id']
+            type = None
+            while type != 'last':
+                time.sleep(5)
+                result = requests.get('http://localhost:8181/api/amlight/sdntrace/trace/%s' % trace_id)
+                trace = result.json()
+                type = trace['result'][-1]['type']
+            log.info(trace)

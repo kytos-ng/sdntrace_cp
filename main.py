@@ -46,6 +46,18 @@ class Main(KytosNApp):
         event.content['kwargs'] = {'trigger': trigger}
         event.content['kwargs'].update(kwargs)
         self.controller.buffers.app.put(event)
+        event = KytosEvent('amlight/scheduler.add_job')
+        event.content['id'] = 'automatic_important_traces'
+        event.content['func'] = self.automate.run_important_traces
+        try:
+            trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
+            kwargs = settings.IMPORTANT_CIRCUITS_ARGS
+        except AttributeError:
+            trigger = 'interval'
+            kwargs = {'minutes': 10}
+        event.content['kwargs'] = {'trigger': trigger}
+        event.content['kwargs'].update(kwargs)
+        self.controller.buffers.app.put(event)
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -64,6 +76,9 @@ class Main(KytosNApp):
         """
         event = KytosEvent('amlight/scheduler.remove_job')
         event.content['id'] = 'automatic_traces'
+        self.controller.buffers.app.put(event)
+        event = KytosEvent('amlight/scheduler.remove_job')
+        event.content['id'] = 'automatic_important_traces'
         self.controller.buffers.app.put(event)
 
     @rest('/trace', methods=['PUT'])
