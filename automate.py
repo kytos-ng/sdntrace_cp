@@ -3,6 +3,8 @@
 from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
 from napps.amlight.sdntrace_cp.utils import format_result, clean_circuits
+from napps.amlight.sdntrace_cp import settings
+from kytos.core import log
 
 
 class Automate:
@@ -10,7 +12,7 @@ class Automate:
 
     def __init__(self, tracer):
         self._tracer = tracer
-        self.circuits = []
+        self._circuits = []
         self.find_circuits()
 
     def find_circuits(self):
@@ -48,7 +50,6 @@ class Automate:
                 if switch.ofp_version == '0x04':
                     in_port = in_port.value
                     vlan = vlan.value
-                print(switch.dpid, in_port, vlan)
                 entries = {
                     'trace': {
                         'switch': {
@@ -63,8 +64,23 @@ class Automate:
                 result = self._tracer.tracepath(entries)
                 circuits.append(format_result(result))
 
-        self.circuits = clean_circuits(circuits)
+        self._circuits = clean_circuits(circuits, self._tracer.controller)
 
     def run_traces(self):
         """Run traces for all circuits."""
+
+        results = []
+        for circuit in self._circuits:
+            entries = circuit['entries']
+            result = self._tracer.tracepath(entries)
+            try:
+                result = format_result(result)
+                if result != circuit['circuit']:
+                    results.append(circuit)
+            except KeyError:
+                results.append(circuit)
+        log.info('Results %s, tamanho %s' % (results, len(self._circuits)))
+        return results
+
+    def check_trace(self, trace):
         pass

@@ -4,7 +4,7 @@ Run tracepaths on OpenFlow in the Control Plane
 """
 
 from datetime import datetime
-from kytos.core import KytosNApp, log, rest
+from kytos.core import KytosNApp, KytosEvent, log, rest
 from kytos.core.helpers import listen_to
 from flask import jsonify, request
 from napps.amlight.sdntrace_cp import settings
@@ -34,6 +34,18 @@ class Main(KytosNApp):
         self.traces = {}
         self.last_id = 30000
         self.automate = Automate(self)
+        event = KytosEvent('amlight/scheduler.add_job')
+        event.content['id'] = 'automatic_traces'
+        event.content['func'] = self.automate.run_traces
+        try:
+            trigger = settings.SCHEDULE_TRIGGER
+            kwargs = settings.SCHEDULE_ARGS
+        except AttributeError:
+            trigger = 'interval'
+            kwargs = {'seconds': 60}
+        event.content['kwargs'] = {'trigger': trigger}
+        event.content['kwargs'].update(kwargs)
+        self.controller.buffers.app.put(event)
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -50,7 +62,9 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        pass
+        event = KytosEvent('amlight/scheduler.remove_job')
+        event.content['id'] = 'automatic_traces'
+        self.controller.buffers.app.put(event)
 
     @rest('/trace', methods=['PUT'])
     def trace(self):
