@@ -5,6 +5,7 @@ Run tracepaths on OpenFlow in the Control Plane
 
 from datetime import datetime
 from kytos.core import KytosNApp, log, rest
+from kytos.core.helpers import listen_to
 from flask import jsonify, request
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
@@ -131,3 +132,7 @@ class Main(KytosNApp):
                 'in_port': endpoint.port_number,
                 'out_port': port,
                 'entries': entries}
+
+    @listen_to('amlight/kytos_flow_manager.flows_updated')
+    def update_circuits(self, event):
+        self.automate.find_circuits()
