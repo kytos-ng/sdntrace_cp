@@ -4,7 +4,7 @@
   "name": "sdntrace_cp",
   "description": "Run tracepaths on OpenFlow in the Control Plane",
   "version": "latest",
-  "napp_dependencies": [],
+  "napp_dependencies": ["amlight/kytos_flow_manager", "amlight/scheduler"],
   "license": "",
   "tags": [],
   "url": ""
