@@ -6,7 +6,7 @@ from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
 from napps.amlight.sdntrace_cp.utils import format_result, clean_circuits
 from napps.amlight.sdntrace_cp import settings
-from kytos.core import log
+from kytos.core import KytosEvent, log
 
 
 class Automate:
@@ -88,10 +88,41 @@ class Automate:
         log.info('Results %s, tamanho %s' % (results, len(self._circuits)))
         return results
 
-    def check_trace(self, trace):
-        pass
+    def get_circuit(self, circuit):
+        """Find the given circuit in the list of circuits."""
+        for steps in self._circuits:
+            endpoint_a = steps['circuit'][0]
+            endpoint_z = steps['circuit'][-1]
+            if circuit['dpid_a'] == endpoint_a['dpid'] and \
+                circuit['port_a'] == endpoint_a['in_port'] and \
+                circuit['vlan_a'] == endpoint_a['in_vlan'] and \
+                circuit['dpid_z'] == endpoint_z['dpid'] and \
+                circuit['port_z'] == endpoint_z['out_port'] and \
+                circuit['vlan_z'] == endpoint_z['out_vlan']:
+                return steps['circuit']
+        return None
+
+    def _check_trace(self, circuit, trace):
+        steps = self.get_circuit(circuit)
+        if steps:
+            if len(steps) != len(trace) - 1:
+                return False
+            for i, step in enumerate(steps):
+                if not self.check_step(step, trace[i]):
+                    return False
+        else:
+            return False
+        return True
 
     def run_important_traces(self):
+        """Run SDNTrace in data plane for important circuits as defined
+            by user."""
+        event = KytosEvent(name='amlight/kytos_courier.slack_send')
+        content = {
+            'channel': 'tests',
+            'source': 'amlight/sdntrace_cp'
+        }
+
         try:
             important_circuits = settings.IMPORTANT_CIRCUITS
         except AttributeError:
@@ -112,10 +143,22 @@ class Automate:
             result = requests.put('http://localhost:8181/api/amlight/sdntrace/trace', json=entries)
             trace = result.json()
             trace_id = trace['result']['trace_id']
-            type = None
-            while type != 'last':
+            step_type = None
+            while step_type != 'last':
                 time.sleep(5)
                 result = requests.get('http://localhost:8181/api/amlight/sdntrace/trace/%s' % trace_id)
                 trace = result.json()
-                type = trace['result'][-1]['type']
-            log.info(trace)
+                step_type = trace['result'][-1]['type']
+            check = self._check_trace(circuit, trace['result'])
+            if check is False:
+                content['m_body'] = 'Trace in data plane different from ' \
+                                    'trace in control plane for circuit ' \
+                                    '%s' % circuit
+                event.content['message'] = content
+                self._tracer.controller.buffers.app.put(event)
+
+    @staticmethod
+    def check_step(circuit_step, trace_step):
+        """Check if a step in SDNTrace in data plane is what it should"""
+        return circuit_step['dpid'] == trace_step['dpid'] and \
+               circuit_step['in_port'] == trace_step['port']
