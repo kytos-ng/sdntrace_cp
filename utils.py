@@ -1,7 +1,6 @@
 """Utility functions to be used in this Napp"""
 
-from kytos.core import log
-from kytos.core import KytosEvent, KytosNApp
+from kytos.core import KytosEvent
 
 TRANSLATE_NAMES = {
     'dl_src': 'eth_src',
@@ -95,10 +94,10 @@ def clean_circuits(circuits, controller):
     for circuit in cleaned_circuits:
         has_return = False
         for other in cleaned_circuits:
-            if compare_endpoints(circuit['circuit'][0],
-                                 other['circuit'][-1]) \
-                    and compare_endpoints(circuit['circuit'][-1],
-                                          other['circuit'][0]):
+            if _compare_endpoints(circuit['circuit'][0],
+                                  other['circuit'][-1]) \
+                    and _compare_endpoints(circuit['circuit'][-1],
+                                           other['circuit'][0]):
                 has_return = True
         if not has_return:
             content['m_body'] = \
@@ -108,7 +107,7 @@ def clean_circuits(circuits, controller):
     return cleaned_circuits
 
 
-def compare_endpoints(endpoint1, endpoint2):
+def _compare_endpoints(endpoint1, endpoint2):
     if endpoint1['dpid'] != endpoint2['dpid']:
         return False
     if endpoint1['in_port'] != endpoint2['out_port']:

@@ -140,13 +140,14 @@ class Automate:
                     }
                 }
             }
-            result = requests.put('http://localhost:8181/api/amlight/sdntrace/trace', json=entries)
+            result = requests.put(settings.SDNTRACE_URL, json=entries)
             trace = result.json()
             trace_id = trace['result']['trace_id']
             step_type = None
             while step_type != 'last':
                 time.sleep(5)
-                result = requests.get('http://localhost:8181/api/amlight/sdntrace/trace/%s' % trace_id)
+                result = requests.get('%s/%s' %
+                                      (settings.SDNTRACE_URL, trace_id))
                 trace = result.json()
                 step_type = trace['result'][-1]['type']
             check = self._check_trace(circuit, trace['result'])

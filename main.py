@@ -164,4 +164,6 @@ class Main(KytosNApp):
 
     @listen_to('amlight/kytos_flow_manager.flows_updated')
     def update_circuits(self, event):
+        """Update the list of circuits after a flow change."""
+        # pylint: disable=unused-argument
         self.automate.find_circuits()
