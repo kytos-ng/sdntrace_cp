@@ -12,7 +12,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (
     convert_entries, find_endpoint, prepare_json
 )
-from napps.amlight.kytos_flow_manager.main import Main as FlowManager
+from napps.amlight.flow_stats.main import Main as FlowManager
 
 
 class Main(KytosNApp):
@@ -162,7 +162,7 @@ class Main(KytosNApp):
                 'out_port': port,
                 'entries': entries}
 
-    @listen_to('amlight/kytos_flow_manager.flows_updated')
+    @listen_to('amlight/flow_stats.flows_updated')
     def update_circuits(self, event):
         """Update the list of circuits after a flow change."""
         # pylint: disable=unused-argument
