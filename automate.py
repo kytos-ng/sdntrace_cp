@@ -51,10 +51,13 @@ class Automate:
         for switch, flows in all_flows.items():
             for flow in flows:
                 in_port = flow.match['in_port']
-                vlan = flow.match['vlan_vid']
+                vlan = None
+                if 'vlan_vid' in flow.match:
+                    vlan = flow.match['vlan_vid']
                 if switch.ofp_version == '0x04':
                     in_port = in_port.value
-                    vlan = vlan.value
+                    if vlan:
+                        vlan = vlan.value
                 entries = {
                     'trace': {
                         'switch': {
@@ -85,7 +88,7 @@ class Automate:
                     results.append(circuit)
             except KeyError:
                 results.append(circuit)
-        log.info('Results %s, tamanho %s' % (results, len(self._circuits)))
+        log.info('Results %s, size %s' % (results, len(self._circuits)))
         return results
 
     def get_circuit(self, circuit):
