@@ -58,10 +58,11 @@ def format_result(trace):
     result = []
     for step in trace:
         new_result = {'dpid': step['in']['dpid'],
-                      'in_port': step['in']['port'],
-                      'out_port': step['out']['port']}
-        if 'vlan' in step['out']:
-            new_result.update({'out_vlan': step['out']['vlan']})
+                      'in_port': step['in']['port']}
+        if 'out' in step:
+            new_result.update({'out_port': step['out']['port']})
+            if 'vlan' in step['out']:
+                new_result.update({'out_vlan': step['out']['vlan']})
         if 'vlan' in step['in']:
             new_result.update({'in_vlan': step['in']['vlan']})
         result.append(new_result)
