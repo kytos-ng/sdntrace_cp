@@ -1,6 +1,6 @@
 # Schedule automatic traces
 SCHEDULE_TRIGGER = 'interval'
-SCHEDULE_ARGS = {'seconds': 4000000000}
+SCHEDULE_ARGS = {'seconds': 120}
 
 IMPORTANT_CIRCUITS = []
 IMPORTANT_CIRCUITS_TRIGGER = 'interval'
