@@ -122,7 +122,7 @@ class Automate:
             by user."""
         event = KytosEvent(name='amlight/kytos_courier.slack_send')
         content = {
-            'channel': 'tests',
+            'channel': settings.SLACK_CHANNEL,
             'source': 'amlight/sdntrace_cp'
         }
 

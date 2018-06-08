@@ -1,6 +1,7 @@
 """Utility functions to be used in this Napp"""
 
 from kytos.core import KytosEvent
+from napps.amlight.sdntrace_cp import settings
 
 TRANSLATE_NAMES = {
     'dl_src': 'eth_src',
@@ -74,7 +75,7 @@ def clean_circuits(circuits, controller):
     cleaned_circuits = []
     event = KytosEvent(name='amlight/kytos_courier.slack_send')
     content = {
-        'channel': 'tests',
+        'channel': settings.SLACK_CHANNEL,
         'source': 'amlight/sdntrace_cp'
     }
     for circuit in circuits:
