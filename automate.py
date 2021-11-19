@@ -88,7 +88,7 @@ class Automate:
                     results.append(circuit)
             except KeyError:
                 results.append(circuit)
-        log.info('Results %s, size %s' % (results, len(self._circuits)))
+        log.debug('Results %s, size %s' % (results, len(self._circuits)))
         return results
 
     def get_circuit(self, circuit):
