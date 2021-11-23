@@ -112,7 +112,11 @@ def clean_circuits(circuits, controller):
 def _compare_endpoints(endpoint1, endpoint2):
     if endpoint1['dpid'] != endpoint2['dpid']:
         return False
-    if endpoint1['in_port'] != endpoint2['out_port']:
+    if (
+        'in_port' not in endpoint1
+        or 'out_port' not in endpoint2
+        or endpoint1['in_port'] != endpoint2['out_port']
+    ):
         return False
     if 'in_vlan' in endpoint1 and 'out_vlan' in endpoint2:
         if endpoint1['in_vlan'] != endpoint2['out_vlan']:
