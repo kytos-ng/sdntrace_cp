@@ -1,2 +1,1 @@
-git+https://github.com/amlight/scheduler@master#egg=amlight-scheduler
-git+https://github.com/amlight/flow_stats@master#egg=amlight-flow_stats
+requests
