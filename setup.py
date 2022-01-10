@@ -287,6 +287,7 @@ setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       extras_require={
           'dev': [
               'coverage',
+              'pip-tools',
               'yala',
               'tox',
           ],
