@@ -5,5 +5,6 @@
 #
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
 -e git+https://github.com/kytos-ng/kytos.git#egg=kytos
+-e git+https://github.com/kytos-ng/of_core.git#egg=kytos_of_core
 -e git+https://github.com/amlight/flow_stats@fix/install_req_deps#egg=amlight-flow_stats
 -e .[dev]
