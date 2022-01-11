@@ -4,16 +4,18 @@
 #
 #    pip-compile --output-file=requirements/dev.txt requirements/dev.in
 #
--e git+https://github.com/amlight/flow_stats@fix/install_req_deps#egg=amlight-flow_stats
-    # via -r requirements/dev.in
 -e .
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/kytos.git#egg=kytos
+    # via -r requirements/dev.in
+-e git+https://github.com/kytos-ng/of_core.git#egg=kytos_of_core
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
     # via
     #   -r requirements/dev.in
     #   kytos
+-e git+https://github.com/amlight/flow_stats@fix/install_req_deps#egg=amlight-flow_stats
+    # via -r requirements/dev.in
 astroid==2.9.3
     # via pylint
 backcall==0.1.0
@@ -40,7 +42,7 @@ docutils==0.18.1
     # via
     #   kytos
     #   python-daemon
-filelock==3.4.2
+filelock==3.4.1
     # via
     #   tox
     #   virtualenv
@@ -111,7 +113,7 @@ pickleshare==0.7.5
     #   kytos
 pip-tools==6.4.0
     # via amlight-sdntrace-cp
-platformdirs==2.4.1
+platformdirs==2.4.0
     # via
     #   pylint
     #   virtualenv
@@ -162,7 +164,7 @@ toml==0.10.2
     # via
     #   pylint
     #   tox
-tomli==2.0.0
+tomli==1.2.3
     # via pep517
 tox==3.24.5
     # via amlight-sdntrace-cp
