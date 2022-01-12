@@ -168,4 +168,5 @@ class Main(KytosNApp):
     def update_circuits(self, event):
         """Update the list of circuits after a flow change."""
         # pylint: disable=unused-argument
-        self.automate.find_circuits()
+        if settings.FIND_CIRCUITS_IN_FLOWS:
+            self.automate.find_circuits()
