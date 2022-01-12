@@ -3,7 +3,7 @@
   "username": "amlight",
   "name": "sdntrace_cp",
   "description": "Run tracepaths on OpenFlow in the Control Plane",
-  "version": "latest",
+  "version": "1.0.0",
   "napp_dependencies": ["amlight/flow_stats", "amlight/scheduler"],
   "license": "",
   "tags": [],
