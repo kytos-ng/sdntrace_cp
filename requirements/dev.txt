@@ -14,7 +14,7 @@
     # via
     #   -r requirements/dev.in
     #   kytos
--e git+https://github.com/amlight/flow_stats@fix/install_req_deps#egg=amlight-flow_stats
+-e git+https://github.com/amlight/flow_stats#egg=amlight-flow_stats
     # via -r requirements/dev.in
 astroid==2.9.3
     # via pylint
