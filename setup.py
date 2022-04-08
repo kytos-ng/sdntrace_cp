@@ -8,6 +8,7 @@ import shutil
 import sys
 from abc import abstractmethod
 from pathlib import Path
+from string import Template
 from subprocess import CalledProcessError, call, check_call
 
 from setuptools import Command, setup
@@ -70,7 +71,9 @@ class TestCommand(Command):
 
     def get_args(self):
         """Return args to be used in test command."""
-        return '--size %s --type %s' % (self.size, self.type)
+        tmpl = Template("--size ${size} --type ${type}")
+        data = {"size": self.size, "type": self.type}
+        return tmpl.substitute(data)
 
     def initialize_options(self):
         """Set default size and type args."""
@@ -110,17 +113,23 @@ class Test(TestCommand):
         """Return args to be used in test command."""
         markers = self.size
         if markers == "small":
-            markers = 'not medium and not large'
-        size_args = "" if self.size == "all" else "-m '%s'" % markers
-        return '--addopts="tests/%s %s"' % (self.type, size_args)
+            markers = "not medium and not large"
+        size_args = ""
+        if self.size != "all":
+            size_args = Template("-m '${markers}'")
+        add_opts = Template('--addopts="tests/${type} ${args}"')
+        data = {"type": self.type, "args": size_args}
+        return add_opts.substitute(data)
 
     def run(self):
         """Run tests."""
-        cmd = 'python setup.py pytest %s' % self.get_args()
+        cmd = f"python setup.py pytest {0}".format(self.get_args())
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
             print(exc)
+            print("Unit tests failed. Fix the errors above and try again.")
+            sys.exit(-1)
 
 
 class TestCoverage(Test):
@@ -130,12 +139,18 @@ class TestCoverage(Test):
 
     def run(self):
         """Run tests quietly and display coverage report."""
-        cmd = 'coverage3 run setup.py pytest %s' % self.get_args()
-        cmd += '&& coverage3 report'
+        tmpl = Template(
+            "coverage3 run setup.py pytest ${arg1} && coverage3 report"
+        )
+        cmd = tmpl.substitute(arg1=self.get_args())
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
             print(exc)
+            print(
+                "Coverage tests failed. Fix the errors abov e and try again."
+            )
+            sys.exit(-1)
 
 
 class Linter(SimpleCommand):
@@ -147,7 +162,8 @@ class Linter(SimpleCommand):
         """Run yala."""
         print('Yala is running. It may take several seconds...')
         try:
-            check_call('yala *.py tests', shell=True)
+            cmd = "yala *.py tests"
+            check_call(cmd, shell=True)
             print('No linter error found.')
         except CalledProcessError:
             print('Linter check failed. Fix the error(s) above and try again.')
@@ -161,9 +177,11 @@ class CITest(TestCommand):
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        coverage_cmd = 'python3 setup.py coverage %s' % self.get_args()
-        lint_cmd = 'python3 setup.py lint'
-        cmd = '%s && %s' % (coverage_cmd, lint_cmd)
+        coverage_cmd = f"python3.6 setup.py coverage {0}".format(
+            self.get_args()
+        )
+        lint_cmd = "python3.6 setup.py lint"
+        cmd = f"{0} && {1}".format(coverage_cmd, lint_cmd)
         check_call(cmd, shell=True)
 
 
@@ -179,6 +197,9 @@ class KytosInstall:
             src = ENABLED_PATH / napp_path
             dst = INSTALLED_PATH / napp_path
             symlink_if_different(src, dst)
+
+    def __str__(self):
+        return self.__class__.__name__
 
 
 class InstallMode(install):
@@ -203,8 +224,16 @@ class EggInfo(egg_info):
     def _install_deps_wheels():
         """Python wheels are much faster (no compiling)."""
         print('Installing dependencies...')
-        check_call([sys.executable, '-m', 'pip', 'install', '-r',
-                    'requirements/run.txt'])
+        check_call(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-r",
+                "requirements/run.txt",
+            ]
+        )
 
 
 class DevelopMode(develop):
@@ -277,13 +306,13 @@ def read_requirements(path="requirements/run.txt"):
 setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       version=NAPP_VERSION,
       description='Run tracepaths on OpenFlow in the Control Plane',
-      url='http://github.com/amlight/sdntrace_cp',
+      url='http://github.com/kytos-ng/sdntrace_cp',
       author='FIU/AmLight team',
       author_email='ops@amlight.net',
       license='MIT',
-      install_requires=read_requirements(),
+      install_requires=read_requirements() + ["setuptools >= 36.0.1"],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      tests_require=["pytest==7.0.0"],
       extras_require={
           'dev': [
               'coverage',
@@ -306,6 +335,6 @@ setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       classifiers=[
           'License :: OSI Approved :: MIT License',
           'Operating System :: POSIX :: Linux',
-          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.6',
           'Topic :: System :: Networking',
       ])
