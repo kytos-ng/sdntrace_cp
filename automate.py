@@ -1,12 +1,13 @@
 """Automate circuit traces."""
 
 import time
+
 import requests
+from kytos.core import KytosEvent, log
+from napps.amlight.sdntrace_cp import settings
+from napps.amlight.sdntrace_cp.utils import clean_circuits, format_result
 from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
-from napps.amlight.sdntrace_cp.utils import format_result, clean_circuits
-from napps.amlight.sdntrace_cp import settings
-from kytos.core import KytosEvent, log
 
 
 class Automate:
@@ -17,6 +18,7 @@ class Automate:
         self._circuits = []
         self.find_circuits()
 
+    # pylint: disable=too-many-nested-blocks, too-many-branches
     def find_circuits(self):
         """Discover all circuits in a topology.
 
@@ -88,7 +90,7 @@ class Automate:
                     results.append(circuit)
             except KeyError:
                 results.append(circuit)
-        log.debug('Results %s, size %s' % (results, len(self._circuits)))
+        log.debug('Results %s, size %s', results, len(self._circuits))
         return results
 
     def get_circuit(self, circuit):
@@ -96,12 +98,14 @@ class Automate:
         for steps in self._circuits:
             endpoint_a = steps['circuit'][0]
             endpoint_z = steps['circuit'][-1]
-            if circuit['dpid_a'] == endpoint_a['dpid'] and \
-                circuit['port_a'] == endpoint_a['in_port'] and \
-                circuit['vlan_a'] == endpoint_a['in_vlan'] and \
-                circuit['dpid_z'] == endpoint_z['dpid'] and \
-                circuit['port_z'] == endpoint_z['out_port'] and \
-                circuit['vlan_z'] == endpoint_z['out_vlan']:
+            # pylint: disable=too-many-boolean-expressions
+            if (circuit['dpid_a'] == endpoint_a['dpid'] and
+                    circuit['port_a'] == endpoint_a['in_port'] and
+                    circuit['vlan_a'] == endpoint_a['in_vlan'] and
+                    circuit['dpid_z'] == endpoint_z['dpid'] and
+                    circuit['port_z'] == endpoint_z['out_port'] and
+                    circuit['vlan_z'] == endpoint_z['out_vlan']):
+
                 return steps['circuit']
         return None
 
@@ -149,20 +153,19 @@ class Automate:
             step_type = None
             while step_type != 'last':
                 time.sleep(5)
-                result = requests.get('%s/%s' %
-                                      (settings.SDNTRACE_URL, trace_id))
+                result = requests.get(f'{settings.SDNTRACE_URL}/{trace_id}')
                 trace = result.json()
                 step_type = trace['result'][-1]['type']
             check = self._check_trace(circuit, trace['result'])
             if check is False:
                 content['m_body'] = 'Trace in data plane different from ' \
                                     'trace in control plane for circuit ' \
-                                    '%s' % circuit
+                                    f'{circuit}'
                 event.content['message'] = content
                 self._tracer.controller.buffers.app.put(event)
 
     @staticmethod
     def check_step(circuit_step, trace_step):
         """Check if a step in SDNTrace in data plane is what it should"""
-        return circuit_step['dpid'] == trace_step['dpid'] and \
-               circuit_step['in_port'] == trace_step['port']
+        return (circuit_step['dpid'] == trace_step['dpid'] and
+                circuit_step['in_port'] == trace_step['port'])
