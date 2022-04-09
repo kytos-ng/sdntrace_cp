@@ -4,16 +4,17 @@
 #
 #    pip-compile --output-file=requirements/dev.txt requirements/dev.in
 #
+-e git+https://github.com/kytos-ng/sdntrace#egg=amlight_sdntrace
+    # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/flow_stats#egg=amlight_flow_stats
     # via -r requirements/dev.in
--e file:///mnt/c/projetos/kytos/rmotitsuki/sdntrace_cp
-    # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/kytos.git#egg=kytos
+    # via -r requirements/dev.in
+-e .
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/of_core.git#egg=kytos_of_core
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
-
     # via
     #   -r requirements/dev.in
     #   kytos
