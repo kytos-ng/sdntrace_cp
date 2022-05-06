@@ -61,5 +61,4 @@ class TestMain(TestCase):
                 "/api/amlight/sdntrace_cp/trace/ "),
         ]
         urls = self.get_napp_urls(self.napp)
-        print(urls)
         self.assertEqual(len(expected_urls), len(urls))
