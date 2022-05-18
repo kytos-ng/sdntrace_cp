@@ -20,6 +20,8 @@
     #   kytos
 astroid==2.9.3
     # via pylint
+attrs==21.4.0
+    # via pytest
 backcall==0.1.0
     # via
     #   ipython
@@ -74,6 +76,8 @@ idna==3.3
     #   amlight-sdntrace
     #   amlight-sdntrace-cp
     #   requests
+iniconfig==1.1.1
+    # via pytest
 ipython==7.13.0
     # via kytos
 ipython-genutils==0.2.0
@@ -111,7 +115,9 @@ markupsafe==1.1.1
 mccabe==0.6.1
     # via pylint
 packaging==21.3
-    # via tox
+    # via
+    #   pytest
+    #   tox
 parso==0.6.2
     # via
     #   jedi
@@ -137,7 +143,9 @@ platformdirs==2.4.0
     #   pylint
     #   virtualenv
 pluggy==1.0.0
-    # via tox
+    # via
+    #   pytest
+    #   tox
 prompt-toolkit==3.0.5
     # via
     #   ipython
@@ -147,9 +155,13 @@ ptyprocess==0.6.0
     #   kytos
     #   pexpect
 py==1.11.0
-    # via tox
+    # via
+    #   pytest
+    #   tox
 pycodestyle==2.8.0
     # via yala
+pydantic==1.9.0
+    # via kytos
 pygments==2.11.2
     # via
     #   ipython
@@ -158,8 +170,14 @@ pyjwt==1.7.1
     # via kytos
 pylint==2.12.2
     # via yala
+pymongo==4.1.0
+    # via kytos
 pyparsing==3.0.6
     # via packaging
+pytest==7.0.0
+    # via amlight-sdntrace-cp
+pytest-runner==6.0.0
+    # via amlight-sdntrace-cp
 python-daemon==2.2.4
     # via kytos
 python-engineio==3.12.1
@@ -183,12 +201,16 @@ six==1.16.0
     #   tox
     #   traitlets
     #   virtualenv
+tenacity==8.0.1
+    # via kytos
 toml==0.10.2
     # via
     #   pylint
     #   tox
 tomli==1.2.3
-    # via pep517
+    # via
+    #   pep517
+    #   pytest
 tox==3.24.5
     # via amlight-sdntrace-cp
 traitlets==4.3.3
@@ -198,6 +220,8 @@ traitlets==4.3.3
 typing-extensions==4.0.1
     # via
     #   astroid
+    #   kytos
+    #   pydantic
     #   pylint
 urllib3==1.26.7
     # via

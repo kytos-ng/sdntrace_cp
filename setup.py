@@ -312,10 +312,10 @@ setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       license='MIT',
       install_requires=read_requirements() + ["setuptools >= 59.6.0"],
       packages=[],
-      setup_requires=['pytest-runner'],
-      tests_require=["pytest==7.0.0"],
       extras_require={
           'dev': [
+              'pytest==7.0.0',
+              'pytest-runner',
               'coverage',
               'pip-tools',
               'yala',
