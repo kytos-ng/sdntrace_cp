@@ -102,13 +102,13 @@ def clean_circuits(circuits, controller):
                                            other['circuit'][0]):
                 has_return = True
         if not has_return:
-            content['m_body'] = \
-                'Circuit %s has no way back' % circuit['circuit']
+            content['m_body'] = f"Circuit {circuit['circuit']} has no way back"
             event.content['message'] = content
             controller.buffers.app.put(event)
     return cleaned_circuits
 
 
+# pylint: disable=too-many-return-statements
 def _compare_endpoints(endpoint1, endpoint2):
     if endpoint1['dpid'] != endpoint2['dpid']:
         return False

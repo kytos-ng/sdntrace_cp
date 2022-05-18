@@ -4,15 +4,15 @@ Run tracepaths on OpenFlow in the Control Plane
 """
 
 from datetime import datetime
-from kytos.core import KytosNApp, KytosEvent, log, rest
-from kytos.core.helpers import listen_to
+
 from flask import jsonify, request
+from kytos.core import KytosEvent, KytosNApp, log, rest
+from kytos.core.helpers import listen_to
+from napps.amlight.flow_stats.main import Main as FlowManager
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
-from napps.amlight.sdntrace_cp.utils import (
-    convert_entries, find_endpoint, prepare_json
-)
-from napps.amlight.flow_stats.main import Main as FlowManager
+from napps.amlight.sdntrace_cp.utils import (convert_entries, find_endpoint,
+                                             prepare_json)
 
 
 class Main(KytosNApp):
@@ -69,7 +69,6 @@ class Main(KytosNApp):
 
             self.execute_as_loop(30)  # 30-second interval.
         """
-        pass
 
     def shutdown(self):
         """This method is executed when your napp is unloaded.
@@ -100,11 +99,10 @@ class Main(KytosNApp):
 
         do_trace = True
         while do_trace:
-            trace_step = {'in':
-                              {'dpid': entries['dpid'],
-                               'port': entries['in_port'],
-                               'time': str(datetime.now()),
-                               'type': trace_type}}
+            trace_step = {'in': {'dpid': entries['dpid'],
+                                 'port': entries['in_port'],
+                                 'time': str(datetime.now()),
+                                 'type': trace_type}}
             if 'vlan_vid' in entries:
                 trace_step['in'].update({'vlan': entries['vlan_vid'][0]})
             switch = self.controller.get_switch_by_dpid(entries['dpid'])

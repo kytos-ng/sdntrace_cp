@@ -1,3 +1,7 @@
+"""
+ sdntrace_cp settings
+"""
+
 # Schedule automatic traces
 TRIGGER_SCHEDULE_TRACES = False
 SCHEDULE_TRIGGER = 'interval'
