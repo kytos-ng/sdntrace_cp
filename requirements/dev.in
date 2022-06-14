@@ -9,3 +9,4 @@
 -e git+https://github.com/kytos-ng/sdntrace.git#egg=amlight_sdntrace
 -e git+https://github.com/kytos-ng/flow_stats.git#egg=amlight_flow_stats
 -e .[dev]
+black==22.3.0
