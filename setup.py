@@ -8,7 +8,6 @@ import shutil
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from string import Template
 from subprocess import CalledProcessError, call, check_call
 
 from setuptools import Command, setup
@@ -62,34 +61,22 @@ class TestCommand(Command):
     """Test tags decorators."""
 
     user_options = [
-        ('size=', None, 'Specify the size of tests to be executed.'),
-        ('type=', None, 'Specify the type of tests to be executed.'),
+        ("k=", None, "Specify a pytest -k expression."),
     ]
-
-    sizes = ('small', 'medium', 'large', 'all')
-    types = ('unit', 'integration', 'e2e')
 
     def get_args(self):
         """Return args to be used in test command."""
-        tmpl = Template("--size ${size} --type ${type}")
-        data = {"size": self.size, "type": self.type}
-        return tmpl.substitute(data)
+        if self.k:
+            return f"-k '{self.k}'"
+        return ""
 
     def initialize_options(self):
         """Set default size and type args."""
-        self.size = 'all'
-        self.type = 'unit'
+        self.k = ""
 
     def finalize_options(self):
         """Post-process."""
-        try:
-            assert self.size in self.sizes, ('ERROR: Invalid size:'
-                                             f':{self.size}')
-            assert self.type in self.types, ('ERROR: Invalid type:'
-                                             f':{self.type}')
-        except AssertionError as exc:
-            print(exc)
-            sys.exit(-1)
+        pass
 
 
 class Cleaner(SimpleCommand):
@@ -107,49 +94,32 @@ class Cleaner(SimpleCommand):
 class Test(TestCommand):
     """Run all tests."""
 
-    description = 'run tests and display results'
-
-    def get_args(self):
-        """Return args to be used in test command."""
-        markers = self.size
-        if markers == "small":
-            markers = "not medium and not large"
-        size_args = ""
-        if self.size != "all":
-            size_args = Template("-m '${markers}'")
-        add_opts = Template('--addopts="tests/${type} ${args}"')
-        data = {"type": self.type, "args": size_args}
-        return add_opts.substitute(data)
+    description = "run tests and display results"
 
     def run(self):
         """Run tests."""
-        cmd = f"python setup.py pytest {0}".format(self.get_args())
+        cmd = f"python3 -m pytest tests/ {self.get_args()}"
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
             print(exc)
-            print("Unit tests failed. Fix the errors above and try again.")
+            print('Unit tests failed. Fix the errors above and try again.')
             sys.exit(-1)
 
 
 class TestCoverage(Test):
     """Display test coverage."""
 
-    description = 'run tests and display code coverage'
+    description = "run tests and display code coverage"
 
     def run(self):
         """Run tests quietly and display coverage report."""
-        tmpl = Template(
-            "coverage3 run setup.py pytest ${arg1} && coverage3 report"
-        )
-        cmd = tmpl.substitute(arg1=self.get_args())
+        cmd = f"python3 -m pytest --cov=. tests/ {self.get_args()}"
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
             print(exc)
-            print(
-                "Coverage tests failed. Fix the errors abov e and try again."
-            )
+            print('Coverage tests failed. Fix the errors above and try again.')
             sys.exit(-1)
 
 
@@ -168,21 +138,6 @@ class Linter(SimpleCommand):
         except CalledProcessError:
             print('Linter check failed. Fix the error(s) above and try again.')
             sys.exit(-1)
-
-
-class CITest(TestCommand):
-    """Run all CI tests."""
-
-    description = 'run all CI tests: unit and doc tests, linter'
-
-    def run(self):
-        """Run unit tests with coverage, doc tests and linter."""
-        coverage_cmd = f"python3.9 setup.py coverage {0}".format(
-            self.get_args()
-        )
-        lint_cmd = "python3.9 setup.py lint"
-        cmd = f"{0} && {1}".format(coverage_cmd, lint_cmd)
-        check_call(cmd, shell=True)
 
 
 class KytosInstall:
@@ -315,7 +270,7 @@ setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       extras_require={
           'dev': [
               'pytest==7.0.0',
-              'pytest-runner',
+              'pytest-cov==3.0.0',
               'coverage',
               'pip-tools',
               'yala',
@@ -324,7 +279,6 @@ setup(name=f'{NAPP_USERNAME}_{NAPP_NAME}',
       },
       cmdclass={
           'clean': Cleaner,
-          'ci': CITest,
           'coverage': TestCoverage,
           'develop': DevelopMode,
           'install': InstallMode,
