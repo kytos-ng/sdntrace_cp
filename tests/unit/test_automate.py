@@ -543,8 +543,8 @@ class TestAutomate(TestCase):
             )
             self.assertTrue(
                 event.content["message"]["m_body"],
-                "Trace in data plane different from trace in control plane " \
-                "for circuit {'dpid_a': '00:00:00:00:00:00:00:01', " \
+                "Trace in data plane different from trace in control plane "
+                "for circuit {'dpid_a': '00:00:00:00:00:00:00:01', "
                 "'port_a': 1, 'vlan_a': 100}"
             )
 

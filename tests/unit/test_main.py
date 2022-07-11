@@ -1,4 +1,5 @@
 """Module to test the main napp file."""
+import json
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
@@ -8,6 +9,7 @@ from kytos.lib.helpers import (
     get_switch_mock,
     get_controller_mock,
     get_link_mock,
+    get_test_client,
 )
 
 
@@ -241,3 +243,53 @@ class TestMain(TestCase):
         result = self.napp.has_loop(trace_step, trace_result)
 
         self.assertFalse(result)
+
+    @patch("napps.amlight.sdntrace_cp.main.settings")
+    def test_update_circuits(self, mock_settings):
+        """Test update_circuits event listener with success."""
+        mock_settings.FIND_CIRCUITS_IN_FLOWS = True
+
+        self.napp.automate = MagicMock()
+        self.napp.automate.find_circuits = MagicMock()
+
+        event = MagicMock()
+        self.napp.update_circuits(event)
+
+        self.napp.automate.find_circuits.assert_called_once()
+
+    @patch("napps.amlight.sdntrace_cp.main.settings")
+    def test_update_circuits__no_settings(self, mock_settings):
+        """Test update_circuits event listener without
+        settings option enabled."""
+        mock_settings.FIND_CIRCUITS_IN_FLOWS = False
+
+        self.napp.automate = MagicMock()
+        self.napp.automate.find_circuits = MagicMock()
+
+        event = MagicMock()
+        self.napp.update_circuits(event)
+
+        self.napp.automate.find_circuits.assert_not_called()
+
+    def test_trace(self):
+        """Test trace rest call."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/trace/"
+
+        payload = {
+            "trace": {
+                "switch": {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1},
+                "eth": {"dl_vlan": 100},
+            }
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+
+        self.assertEqual(result[0]["dpid"], "00:00:00:00:00:00:00:01")
+        self.assertEqual(result[0]["port"], 1)
+        self.assertEqual(result[0]["type"], "starting")
+        self.assertEqual(result[0]["vlan"], 100)
