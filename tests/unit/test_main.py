@@ -1,8 +1,14 @@
 """Module to test the main napp file."""
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-from napps.amlight.sdntrace_cp.tests.helpers import get_controller_mock
+from kytos.core.interface import Interface
+from kytos.lib.helpers import (
+    get_interface_mock,
+    get_switch_mock,
+    get_controller_mock,
+    get_link_mock,
+)
 
 
 # pylint: disable=too-many-public-methods, too-many-lines
@@ -58,7 +64,180 @@ class TestMain(TestCase):
             (
                 {},
                 {"OPTIONS", "HEAD", "PUT"},
-                "/api/amlight/sdntrace_cp/trace/ "),
+                "/api/amlight/sdntrace_cp/trace/ ",
+            ),
         ]
         urls = self.get_napp_urls(self.napp)
         self.assertEqual(len(expected_urls), len(urls))
+
+    @patch("napps.amlight.flow_stats.main.Main.match_and_apply")
+    def test_trace_step(self, mock_flow_match):
+        """Test trace_step success result."""
+        mock_flow_match.return_value = ["1"], ["entries"], 1
+        switch = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
+
+        mock_interface = Interface("interface A", 1, MagicMock())
+        mock_interface.address = "00:00:00:00:00:00:00:01"
+
+        iface1 = get_interface_mock(
+            "", 1, get_switch_mock("00:00:00:00:00:00:00:01")
+        )
+        iface2 = get_interface_mock(
+            "", 2, get_switch_mock("00:00:00:00:00:00:00:02")
+        )
+        mock_interface.link = get_link_mock(iface1, iface2)
+        mock_interface.link.endpoint_a.port_number = 1
+        mock_interface.link.endpoint_a.port_number = 2
+
+        # Patch for utils.find_endpoint
+        switch.get_interface_by_port_no.return_value = mock_interface
+
+        entries = MagicMock()
+
+        result = self.napp.trace_step(switch, entries)
+
+        mock_flow_match.assert_called_once()
+        self.assertEqual(
+            result,
+            {
+                "dpid": "00:00:00:00:00:00:00:01",
+                "in_port": 2,
+                "out_port": 1,
+                "entries": ["entries"],
+            },
+        )
+
+    @patch("napps.amlight.flow_stats.main.Main.match_and_apply")
+    def test_trace_step__no_endpoint(self, mock_flow_match):
+        """Test trace_step without endpoints available for switch/port."""
+        mock_flow_match.return_value = ["1"], ["entries"], 1
+        switch = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
+
+        mock_interface = Interface("interface A", 1, MagicMock())
+        mock_interface.address = "00:00:00:00:00:00:00:01"
+        mock_interface.link = None
+
+        # Patch for utils.find_endpoint
+        switch.get_interface_by_port_no.return_value = mock_interface
+
+        entries = MagicMock()
+
+        result = self.napp.trace_step(switch, entries)
+
+        mock_flow_match.assert_called_once()
+        self.assertEqual(result, {"entries": ["entries"], "out_port": 1})
+
+    def test_trace_step__no_flow(self):
+        """Test trace_step without flows for the switch."""
+        switch = get_switch_mock("00:00:00:00:00:00:00:01")
+        entries = MagicMock()
+
+        result = self.napp.trace_step(switch, entries)
+        self.assertIsNone(result)
+
+    @patch("napps.amlight.sdntrace_cp.main.Main.trace_step")
+    def test_tracepath(self, mock_trace_step):
+        """Test tracepath with success result."""
+        eth = {"dl_vlan": 100}
+        dpid = {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1}
+        switch = {"switch": dpid, "eth": eth}
+        entries = {"trace": switch}
+        mock_trace_step.return_value = {
+            "dpid": "00:00:00:00:00:00:00:02",
+            "in_port": 2,
+            "out_port": 3,
+            "entries": entries,
+        }
+
+        result = self.napp.tracepath(entries)
+
+        self.assertEqual(result[0]["in"]["dpid"], "00:00:00:00:00:00:00:01")
+        self.assertEqual(result[0]["in"]["port"], 1)
+        self.assertEqual(result[0]["in"]["type"], "starting")
+        self.assertEqual(result[0]["in"]["vlan"], 100)
+        self.assertEqual(result[0]["out"]["port"], 3)
+
+        self.assertEqual(result[1]["in"]["dpid"], "00:00:00:00:00:00:00:02")
+        self.assertEqual(result[1]["in"]["port"], 2)
+        self.assertEqual(result[1]["in"]["type"], "trace")
+        self.assertEqual(result[0]["out"]["port"], 3)
+
+    def test_has_loop(self):
+        """Test has_loop to detect a tracepath with loop."""
+        trace_result = [
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "port": 2,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "port": 2,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "port": 3,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "port": 3,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+        ]
+        trace_step = {
+            "dpid": "00:00:00:00:00:00:00:03",
+            "port": 3,
+        }
+
+        result = self.napp.has_loop(trace_step, trace_result)
+
+        self.assertTrue(result)
+
+    def test_has_loop__fail(self):
+        """Test has_loop to detect a tracepath with loop."""
+        trace_result = [
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "port": 2,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:02",
+                    "port": 2,
+                },
+                "out": {
+                    "port": 1,
+                },
+            },
+        ]
+        trace_step = {
+            "dpid": "00:00:00:00:00:00:00:03",
+            "port": 2,
+        }
+
+        result = self.napp.has_loop(trace_step, trace_result)
+
+        self.assertFalse(result)
