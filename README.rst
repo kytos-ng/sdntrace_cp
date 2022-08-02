@@ -1,4 +1,4 @@
-|Tag| |License|
+|Tag| |License| |Build| |Coverage| |Quality|
 
 .. raw:: html
 
@@ -22,15 +22,15 @@ To install this NApp, first, make sure to have the same venv activated as you ha
 
 .. code:: shell
 
-   $ git clone https://github.com/amlight/sdntrace_cp.git
+   $ git clone https://github.com/kytos-ng/sdntrace_cp.git
    $ cd sdntrace_cp
    $ python setup.py develop
 
 Requirements
 ============
 
-- `amlight/flow_stats <https://github.com/amlight/flow_stats>`_
-- `amlight/scheduler <https://github.com/amlight/scheduler>`_
+- `amlight/flow_stats <https://github.com/kytos-ng/flow_stats>`_
+- `amlight/scheduler <https://github.com/kytos-ng/scheduler>`_
 
 
 Events
@@ -44,18 +44,18 @@ Subscribed
 
 .. TAGs
 
-.. |License| image:: https://img.shields.io/github/license/amlight/sdntrace_cp.svg
-   :target: https://github.com/amlight/sdntrace_cp/blob/master/LICENSE
-.. |Build| image:: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/badges/build.png?b=master
+.. |License| image:: https://img.shields.io/github/license/kytos-ng/sdntrace_cp.svg
+   :target: https://github.com/kytos-ng/sdntrace_cp/blob/master/LICENSE
+.. |Build| image:: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/badges/build.png?b=master
   :alt: Build status
-  :target: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/?branch=master
-.. |Coverage| image:: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/badges/coverage.png?b=master
+  :target: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/?branch=master
+.. |Coverage| image:: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/badges/coverage.png?b=master
   :alt: Code coverage
-  :target: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/?branch=master
-.. |Quality| image:: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/badges/quality-score.png?b=master
+  :target: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/?branch=master
+.. |Quality| image:: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/badges/quality-score.png?b=master
   :alt: Code-quality score
-  :target: https://scrutinizer-ci.com/g/amlight/sdntrace_cp/?branch=master
+  :target: https://scrutinizer-ci.com/g/kytos-ng/sdntrace_cp/?branch=master
 .. |Stable| image:: https://img.shields.io/badge/stability-stable-green.svg
-   :target: https://github.com/amlight/sdntrace_cp
-.. |Tag| image:: https://img.shields.io/github/tag/amlight/sdntrace_cp.svg
-   :target: https://github.com/amlight/sdntrace_cp/tags
+   :target: https://github.com/kytos-ng/sdntrace_cp
+.. |Tag| image:: https://img.shields.io/github/tag/kytos-ng/sdntrace_cp.svg
+   :target: https://github.com/kytos-ng/sdntrace_cp/tags
