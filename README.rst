@@ -13,7 +13,8 @@
 
 Overview
 ========
-Run tracepaths on OpenFlow in the Control Plane
+
+``sdntrace_cp`` traces OpenFlow paths in the control plane. This NApp can used by either network operators to troubleshoot control plane flow entries or other NApps that might need to make sure that a control plane path is traceable.
 
 Installing
 ==========
