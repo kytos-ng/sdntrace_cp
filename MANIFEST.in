@@ -1,1 +1,2 @@
+include kytos.json
 include requirements/run.txt
