@@ -452,6 +452,7 @@ class TestAutomate(TestCase):
             get_switch_mock("00:00:00:00:00:00:00:03", 0x04),
             get_switch_mock("00:00:00:00:00:00:00:04", 0x04),
         ]
+        switches_dict = {}
         for switch in switches:
             flow = MagicMock()
             in_port = MagicMock()
@@ -463,10 +464,9 @@ class TestAutomate(TestCase):
             flow.actions = [action]
             flows = [flow]
             switch.generic_flows = flows
+            switches_dict[switch.id] = switch
 
-        automate._tracer.controller.switches.copy.values.return_value = (
-            switches
-        )
+        automate._tracer.controller.switches = switches_dict
 
         automate.find_circuits()
 
