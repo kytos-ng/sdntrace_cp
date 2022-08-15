@@ -464,7 +464,9 @@ class TestAutomate(TestCase):
             flows = [flow]
             switch.generic_flows = flows
 
-        automate._tracer.controller.switches.values.return_value = switches
+        automate._tracer.controller.switches.copy.values.return_value = (
+            switches
+        )
 
         automate.find_circuits()
 
