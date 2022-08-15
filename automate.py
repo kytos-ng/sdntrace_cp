@@ -27,7 +27,7 @@ class Automate:
         all_flows = {}
         circuits = []
 
-        for switch in self._tracer.controller.switches.values():
+        for switch in self._tracer.controller.switches.copy().values():
             all_flows[switch] = []
             if switch.ofp_version == '0x01':
                 controller_port = Port10.OFPP_CONTROLLER
