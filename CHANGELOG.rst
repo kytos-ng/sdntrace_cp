@@ -23,14 +23,6 @@ Fixed
 Security
 ========
 
-[2022.2.1] - 2022-08-15
-***********************
-
-Fixed
-=====
-- Made a shallow copy when iterating on shared data structure to avoid RuntimeError size changed
-
-
 [2022.2.0] - 2022-08-08
 ***********************
 
