@@ -4,13 +4,24 @@
 #
 #    pip-compile --output-file=requirements/run.txt requirements/run.in
 #
+apscheduler==3.8.0
+    # via -r requirements/run.in
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.10
     # via requests
 idna==3.3
     # via requests
+pytz==2021.3
+    # via apscheduler
 requests==2.27.0
     # via -r requirements/run.in
+six==1.16.0
+    # via apscheduler
+tzlocal==2.1
+    # via apscheduler
 urllib3==1.26.7
     # via requests
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
