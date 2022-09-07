@@ -89,6 +89,11 @@ paths:
                     type: array 
                     items:
                       type: object
+                      required:
+                        - dpid
+                        - port
+                        - time
+                        - type
                       properties:
                         dpid:
                           type: string
@@ -100,7 +105,7 @@ paths:
                           example: 1
                         time:
                           type: string
-                          description: Start time in the first switch
+                          description: Date time when the iteration was computed
                           example: "2022-01-25 13:44:52.387021"
                         type:
                           type: string
