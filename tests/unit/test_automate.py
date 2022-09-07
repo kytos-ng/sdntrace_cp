@@ -601,3 +601,51 @@ class TestAutomate(TestCase):
         # Check if important trace dont trigger the event
         # It means that the CP trace is the same to the DP trace
         tracer.controller.buffers.app.put.assert_not_called()
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_traces(self, mock_settings):
+        """Test schedule_traces with the arguments from settings"""
+        mock_settings.SCHEDULE_ARGS = {'seconds': 120}
+        mock_settings.SCHEDULE_TRIGGER = 'interval'
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            automate.schedule_traces()
+        except AttributeError:
+            self.fail("automate.schedule_traces() raised an error")
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_traces_fail(self, mock_settings):
+        """Test schedule_traces with wrong arguments from settings"""
+        mock_settings.SCHEDULE_ARGS = 120
+        mock_settings.SCHEDULE_TRIGGER = {'interval'}
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_traces()
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_important_traces(self, mock_settings):
+        """
+        Test schedule_important_traces with the arguments from settings
+        """
+        mock_settings.IMPORTANT_CIRCUITS_ARGS = {'seconds': 20}
+        mock_settings.IMPORTANT_CIRCUITS_TRIGGER = 'interval'
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            automate.schedule_important_traces()
+        except AttributeError:
+            self.fail("automate.schedule_important_traces() raised an error")
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_important_traces_fail(self, mock_settings):
+        """
+        Test schedule_important_traces with wrong arguments from settings
+        """
+        mock_settings.IMPORTANT_CIRCUITS_ARGS = 20
+        mock_settings.IMPORTANT_CIRCUITS_TRIGGER = {'interval'}
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_important_traces()

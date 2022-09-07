@@ -17,6 +17,8 @@ class Automate:
         self._tracer = tracer
         self._circuits = []
         self.find_circuits()
+        self.trigger = ""
+        self.kwargs = {}
 
     # pylint: disable=too-many-nested-blocks, too-many-branches
     def find_circuits(self):
@@ -163,6 +165,26 @@ class Automate:
                                     f'{circuit}'
                 event.content['message'] = content
                 self._tracer.controller.buffers.app.put(event)
+
+    def schedule_traces(self):
+        """Check for invalid arguments from schedule"""
+        self.trigger = settings.SCHEDULE_TRIGGER
+        self.kwargs = settings.SCHEDULE_ARGS
+        print("what is this")
+        print(self.kwargs)
+        if(not isinstance(self.kwargs, dict) or
+                not isinstance(self.trigger, str)):
+            raise AttributeError("Invalid attributes for job to be scheduled.")
+        return (self.trigger, self.kwargs)
+
+    def schedule_important_traces(self):
+        """Check for invalid important arguments from schedule"""
+        self.trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
+        self.kwargs = settings.IMPORTANT_CIRCUITS_ARGS
+        if(not isinstance(self.kwargs, dict) or
+                not isinstance(self.trigger, str)):
+            raise AttributeError("Invalid attributes for job to be scheduled.")
+        return (self.trigger, self.kwargs)
 
     @staticmethod
     def check_step(circuit_step, trace_step):

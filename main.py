@@ -6,11 +6,12 @@ Run tracepaths on OpenFlow in the Control Plane
 from datetime import datetime
 
 from flask import jsonify, request
-from kytos.core import KytosEvent, KytosNApp, log, rest
+from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import listen_to
 from napps.amlight.flow_stats.main import Main as FlowManager
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
+from napps.amlight.sdntrace_cp.scheduler import Scheduler
 from napps.amlight.sdntrace_cp.utils import (convert_entries, find_endpoint,
                                              prepare_json)
 
@@ -34,32 +35,23 @@ class Main(KytosNApp):
         self.traces = {}
         self.last_id = 30000
         self.automate = Automate(self)
+        self.scheduler = Scheduler()
         if settings.TRIGGER_SCHEDULE_TRACES:
-            event = KytosEvent('amlight/scheduler.add_job')
-            event.content['id'] = 'automatic_traces'
-            event.content['func'] = self.automate.run_traces
-            try:
-                trigger = settings.SCHEDULE_TRIGGER
-                kwargs = settings.SCHEDULE_ARGS
-            except AttributeError:
-                trigger = 'interval'
-                kwargs = {'seconds': 60}
-            event.content['kwargs'] = {'trigger': trigger}
-            event.content['kwargs'].update(kwargs)
-            self.controller.buffers.app.put(event)
+            self.settings = {}
+            self.settings['id'] = 'automatic_traces'
+            self.settings['func'] = self.automate.run_traces
+            (trigger, kwargs) = self.automate.schedule_traces()
+            self.settings['kwargs'] = {'trigger': trigger}
+            self.settings['kwargs'].update(kwargs)
+            self.scheduler.add_job(self.settings)
         if settings.TRIGGER_IMPORTANT_CIRCUITS:
-            event = KytosEvent('amlight/scheduler.add_job')
-            event.content['id'] = 'automatic_important_traces'
-            event.content['func'] = self.automate.run_important_traces
-            try:
-                trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
-                kwargs = settings.IMPORTANT_CIRCUITS_ARGS
-            except AttributeError:
-                trigger = 'interval'
-                kwargs = {'minutes': 10}
-            event.content['kwargs'] = {'trigger': trigger}
-            event.content['kwargs'].update(kwargs)
-            self.controller.buffers.app.put(event)
+            self.settings = {}
+            self.settings['id'] = 'automatic_important_traces'
+            self.settings['func'] = self.automate.run_important_traces
+            (trigger, kwargs) = self.automate.schedule_important_traces()
+            self.settings['kwargs'] = {'trigger': trigger}
+            self.settings['kwargs'].update(kwargs)
+            self.scheduler.add_job(self.settings)
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -75,12 +67,11 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        event = KytosEvent('amlight/scheduler.remove_job')
-        event.content['id'] = 'automatic_traces'
-        self.controller.buffers.app.put(event)
-        event = KytosEvent('amlight/scheduler.remove_job')
-        event.content['id'] = 'automatic_important_traces'
-        self.controller.buffers.app.put(event)
+        self.settings['id'] = 'automatic_traces'
+        self.scheduler.remove_job(self.settings)
+        self.settings['id'] = 'automatic_important_traces'
+        self.scheduler.remove_job(self.settings)
+        self.scheduler.shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])
     def trace(self):
