@@ -86,12 +86,30 @@ paths:
                 type: object
                 properties:
                   result:
-                    type: object
-                    properties:
-                      trace_id:
-                        type: integer
-                        description: ID of the trace executed
-                        example: 30001
+                    type: array 
+                    items:
+                      type: object
+                      properties:
+                        dpid:
+                          type: string
+                          description: Switch datapath ID 
+                          example: 00:00:00:00:00:00:00:01
+                        port:
+                          type: integer
+                          description: Incoming port in the switch
+                          example: 1
+                        time:
+                          type: string
+                          description: Start time in the first switch
+                          example: "2022-01-25 13:44:52.387021"
+                        type:
+                          type: string
+                          description: Type of the step. May be "starting", "trace", "last" or "loop".
+                          example: "trace"
+                        vlan:
+                          type: integer
+                          description: VLAN ID
+                          example: 100
   /api/amlight/sdntrace_cp/trace/{trace_id}:
     get:
       summary: Get the result of a trace
