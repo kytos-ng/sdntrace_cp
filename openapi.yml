@@ -104,7 +104,7 @@ paths:
                           example: "2022-01-25 13:44:52.387021"
                         type:
                           type: string
-                          description: Type of the step. May be "starting", "trace", "last" or "loop".
+                          description: Type of the step. May be "starting" or "trace".
                           example: "trace"
                         vlan:
                           type: integer
