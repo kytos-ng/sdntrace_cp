@@ -19,6 +19,7 @@ class Automate:
         self.find_circuits()
         self.trigger = ""
         self.kwargs = {}
+        self.ids = set()
 
     # pylint: disable=too-many-nested-blocks, too-many-branches
     def find_circuits(self):
@@ -166,13 +167,18 @@ class Automate:
                 event.content['message'] = content
                 self._tracer.controller.buffers.app.put(event)
 
+    def schedule_id(self, id_):
+        """Keep track of scheduled ids"""
+        if not isinstance(id_, str):
+            raise AttributeError("Invalid id type, for schedule.")
+        self.ids.add(id_)
+        return id_
+
     def schedule_traces(self):
         """Check for invalid arguments from schedule"""
         self.trigger = settings.SCHEDULE_TRIGGER
         self.kwargs = settings.SCHEDULE_ARGS
-        print("what is this")
-        print(self.kwargs)
-        if(not isinstance(self.kwargs, dict) or
+        if (not isinstance(self.kwargs, dict) or
                 not isinstance(self.trigger, str)):
             raise AttributeError("Invalid attributes for job to be scheduled.")
         return (self.trigger, self.kwargs)
@@ -181,10 +187,18 @@ class Automate:
         """Check for invalid important arguments from schedule"""
         self.trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
         self.kwargs = settings.IMPORTANT_CIRCUITS_ARGS
-        if(not isinstance(self.kwargs, dict) or
+        if (not isinstance(self.kwargs, dict) or
                 not isinstance(self.trigger, str)):
             raise AttributeError("Invalid attributes for job to be scheduled.")
         return (self.trigger, self.kwargs)
+
+    def unschedule_id(self, id_):
+        """Remove ids to be unschedule"""
+        try:
+            self.ids.remove(id_)
+            return id_
+        except KeyError:
+            log.warning("This id: {id_} was not scheduled in automate")
 
     @staticmethod
     def check_step(circuit_step, trace_step):

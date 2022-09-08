@@ -37,21 +37,19 @@ class Main(KytosNApp):
         self.automate = Automate(self)
         self.scheduler = Scheduler()
         if settings.TRIGGER_SCHEDULE_TRACES:
-            self.settings = {}
-            self.settings['id'] = 'automatic_traces'
-            self.settings['func'] = self.automate.run_traces
+            id_ = self.automate.schedule_id('automatic_traces')
             (trigger, kwargs) = self.automate.schedule_traces()
-            self.settings['kwargs'] = {'trigger': trigger}
-            self.settings['kwargs'].update(kwargs)
-            self.scheduler.add_job(self.settings)
+            trigger_args = {'trigger': trigger} | kwargs
+            self.scheduler.add_callable(id_,
+                                        self.automate.run_traces,
+                                        **trigger_args)
         if settings.TRIGGER_IMPORTANT_CIRCUITS:
-            self.settings = {}
-            self.settings['id'] = 'automatic_important_traces'
-            self.settings['func'] = self.automate.run_important_traces
+            id_ = self.automate.schedule_id('automatic_important_traces')
             (trigger, kwargs) = self.automate.schedule_important_traces()
-            self.settings['kwargs'] = {'trigger': trigger}
-            self.settings['kwargs'].update(kwargs)
-            self.scheduler.add_job(self.settings)
+            trigger_args = {'trigger': trigger} | kwargs
+            self.scheduler.add_callable(id_,
+                                        self.automate.run_important_traces,
+                                        **trigger_args)
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -67,10 +65,10 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        self.settings['id'] = 'automatic_traces'
-        self.scheduler.remove_job(self.settings)
-        self.settings['id'] = 'automatic_important_traces'
-        self.scheduler.remove_job(self.settings)
+        id_ = self.automate.unschedule_id('automatic_traces')
+        self.scheduler.remove_job(id_)
+        id_ = self.automate.unschedule_id('automatic_important_traces')
+        self.scheduler.remove_job(id_)
         self.scheduler.shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])

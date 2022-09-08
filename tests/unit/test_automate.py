@@ -1,6 +1,7 @@
 """Module to test the automate.py."""
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
+from kytos.core import log
 
 from napps.amlight.sdntrace_cp.automate import Automate
 
@@ -9,7 +10,7 @@ from kytos.lib.helpers import get_switch_mock
 
 # pylint: disable=too-many-public-methods, duplicate-code, protected-access
 class TestAutomate(TestCase):
-    """Test claas Automate."""
+    """Test class Automate."""
 
     @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
     def test_get_circuit(self, mock_find_circuits):
@@ -602,6 +603,23 @@ class TestAutomate(TestCase):
         # It means that the CP trace is the same to the DP trace
         tracer.controller.buffers.app.put.assert_not_called()
 
+    def test_schedule_id(self):
+        """Test schedule_id with proper id type"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            automate.schedule_id('mock_id')
+            self.assertEqual(len(automate.ids), 1)
+        except AttributeError:
+            self.fail('schedule_id() raised an error')
+
+    def test_schedule_id_fail(self):
+        """Test schedule_id with non-string id"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_id(1)
+
     @patch("napps.amlight.sdntrace_cp.automate.settings")
     def test_schedule_traces(self, mock_settings):
         """Test schedule_traces with the arguments from settings"""
@@ -649,3 +667,21 @@ class TestAutomate(TestCase):
         automate = Automate(tracer)
         with self.assertRaises(AttributeError):
             automate.schedule_important_traces()
+
+    def test_unschedule_id(self):
+        """Test unschedule_id with an existent id"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        id_ = 'mock_id'
+        automate.schedule_id(id_)
+        self.assertEqual(len(automate.ids), 1)
+        automate.unschedule_id(id_)
+        self.assertEqual(len(automate.ids), 0)
+
+    def test_unschedule_id_fail(self):
+        """Test unschedule_id with a non-existent id"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        automate.unschedule_id('mock_id')
+        self.assertLogs(log, level='warning')
+        

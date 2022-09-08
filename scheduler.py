@@ -17,21 +17,18 @@ class Scheduler:
         self.scheduler = BackgroundScheduler(timezone=pytz.utc)
         self.scheduler.start()
 
-    def add_job(self, settings):
+    def add_callable(self, id_, func, trigger, args=None, kwargs=None,
+                     **trigger_args):
         """Add job to scheduler"""
-        log.info('add_job called')
-        func = settings['func']
-        job_id = settings['id']
-        self.scheduler.add_job(func, id=job_id, **settings['kwargs'])
+        self.scheduler.add_job(func, trigger=trigger, args=args, kwargs=kwargs,
+                               id=id_, **trigger_args)
 
-    def remove_job(self, settings):
+    def remove_job(self, id_):
         """Remove job from scheduler"""
-        log.info('remove_job called')
-        job_id = settings['id']
         try:
-            self.scheduler.remove_job(job_id)
+            self.scheduler.remove_job(id_)
         except JobLookupError:
-            log.info(f'Job to start {job_id} already removed/does not exist')
+            log.info(f'Job with id, {id_} does not exist')
 
     def shutdown(self, wait):
         """Shut down scheduler.
