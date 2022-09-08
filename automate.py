@@ -196,9 +196,9 @@ class Automate:
         """Remove ids to be unschedule"""
         try:
             self.ids.remove(id_)
-            return id_
         except KeyError:
             log.warning("This id: {id_} was not scheduled in automate")
+        return id_
 
     @staticmethod
     def check_step(circuit_step, trace_step):

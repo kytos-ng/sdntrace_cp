@@ -17,6 +17,7 @@ class Scheduler:
         self.scheduler = BackgroundScheduler(timezone=pytz.utc)
         self.scheduler.start()
 
+    # pylint: disable=too-many-arguments
     def add_callable(self, id_, func, trigger, args=None, kwargs=None,
                      **trigger_args):
         """Add job to scheduler"""

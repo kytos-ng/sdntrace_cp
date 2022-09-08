@@ -1,10 +1,10 @@
 """Module to test the automate.py."""
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from kytos.core import log
 
 from napps.amlight.sdntrace_cp.automate import Automate
 
+from kytos.core import log
 from kytos.lib.helpers import get_switch_mock
 
 
@@ -684,4 +684,3 @@ class TestAutomate(TestCase):
         automate = Automate(tracer)
         automate.unschedule_id('mock_id')
         self.assertLogs(log, level='warning')
-        
