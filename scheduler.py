@@ -4,9 +4,7 @@ This module is intended to replace the usage of the napp
 called scheduler soon to be deprecated.
 """
 import pytz
-from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.background import BackgroundScheduler
-from kytos.core import log
 
 
 class Scheduler:
@@ -26,10 +24,7 @@ class Scheduler:
 
     def remove_job(self, id_):
         """Remove job from scheduler"""
-        try:
-            self.scheduler.remove_job(id_)
-        except JobLookupError:
-            log.info(f'Job with id, {id_} does not exist')
+        self.scheduler.remove_job(id_)
 
     def shutdown(self, wait):
         """Shut down scheduler.
@@ -37,3 +32,7 @@ class Scheduler:
         this function.
         """
         self.scheduler.shutdown(wait)
+
+    def get_job(self, id_):
+        """Return an scheduled job with id_ as id"""
+        return self.scheduler.get_job(id_)

@@ -36,17 +36,13 @@ class Main(KytosNApp):
         self.last_id = 30000
         self.automate = Automate(self)
         self.scheduler = Scheduler()
-        if settings.TRIGGER_SCHEDULE_TRACES:
-            id_ = self.automate.schedule_id('automatic_traces')
-            (trigger, kwargs) = self.automate.schedule_traces()
-            trigger_args = {'trigger': trigger} | kwargs
+        (id_, trigger_args) = self.automate.schedule_traces()
+        if trigger_args and id_:
             self.scheduler.add_callable(id_,
                                         self.automate.run_traces,
                                         **trigger_args)
-        if settings.TRIGGER_IMPORTANT_CIRCUITS:
-            id_ = self.automate.schedule_id('automatic_important_traces')
-            (trigger, kwargs) = self.automate.schedule_important_traces()
-            trigger_args = {'trigger': trigger} | kwargs
+        (id_, trigger_args) = self.automate.schedule_important_traces()
+        if trigger_args and id_:
             self.scheduler.add_callable(id_,
                                         self.automate.run_important_traces,
                                         **trigger_args)

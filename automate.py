@@ -17,8 +17,6 @@ class Automate:
         self._tracer = tracer
         self._circuits = []
         self.find_circuits()
-        self.trigger = ""
-        self.kwargs = {}
         self.ids = set()
 
     # pylint: disable=too-many-nested-blocks, too-many-branches
@@ -174,23 +172,35 @@ class Automate:
         self.ids.add(id_)
         return id_
 
-    def schedule_traces(self):
+    # pylint: disable = redefined-outer-name
+    def schedule_traces(self, settings=settings):
         """Check for invalid arguments from schedule"""
-        self.trigger = settings.SCHEDULE_TRIGGER
-        self.kwargs = settings.SCHEDULE_ARGS
-        if (not isinstance(self.kwargs, dict) or
-                not isinstance(self.trigger, str)):
-            raise AttributeError("Invalid attributes for job to be scheduled.")
-        return (self.trigger, self.kwargs)
+        if settings.TRIGGER_SCHEDULE_TRACES:
+            id_ = self.schedule_id('automatic_traces')
+            trigger = settings.SCHEDULE_TRIGGER
+            kwargs = settings.SCHEDULE_ARGS
+            if (not isinstance(kwargs, dict) or
+                    not isinstance(trigger, str)):
+                raise AttributeError("Invalid attributes for "
+                                     "job to be scheduled.")
+            trigger_args = {'trigger': trigger}.update(kwargs)
+            return (id_, trigger_args)
+        return (None, None)
 
-    def schedule_important_traces(self):
+    # pylint: disable = redefined-outer-name
+    def schedule_important_traces(self, settings=settings):
         """Check for invalid important arguments from schedule"""
-        self.trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
-        self.kwargs = settings.IMPORTANT_CIRCUITS_ARGS
-        if (not isinstance(self.kwargs, dict) or
-                not isinstance(self.trigger, str)):
-            raise AttributeError("Invalid attributes for job to be scheduled.")
-        return (self.trigger, self.kwargs)
+        if settings.TRIGGER_IMPORTANT_CIRCUITS:
+            id_ = self.schedule_id('automatic_important_traces')
+            trigger = settings.IMPORTANT_CIRCUITS_TRIGGER
+            kwargs = settings.IMPORTANT_CIRCUITS_ARGS
+            if (not isinstance(kwargs, dict) or
+                    not isinstance(trigger, str)):
+                raise AttributeError("Invalid attributes for "
+                                     "job to be scheduled.")
+            trigger_args = {'trigger': trigger}.update(kwargs)
+            return (id_, trigger_args)
+        return (None, None)
 
     def unschedule_id(self, id_):
         """Remove ids to be unschedule"""
