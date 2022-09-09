@@ -11,7 +11,6 @@ from kytos.core.helpers import listen_to
 from napps.amlight.flow_stats.main import Main as FlowManager
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
-from napps.amlight.sdntrace_cp.scheduler import Scheduler
 from napps.amlight.sdntrace_cp.utils import (convert_entries, find_endpoint,
                                              prepare_json)
 
@@ -35,17 +34,9 @@ class Main(KytosNApp):
         self.traces = {}
         self.last_id = 30000
         self.automate = Automate(self)
-        self.scheduler = Scheduler()
-        (id_, trigger_args) = self.automate.schedule_traces()
-        if trigger_args and id_:
-            self.scheduler.add_callable(id_,
-                                        self.automate.run_traces,
-                                        **trigger_args)
-        (id_, trigger_args) = self.automate.schedule_important_traces()
-        if trigger_args and id_:
-            self.scheduler.add_callable(id_,
-                                        self.automate.run_important_traces,
-                                        **trigger_args)
+        self.automate.schedule_traces(self.automate.run_traces)
+        important_traces = self.automate.run_important_traces
+        self.automate.schedule_important_traces(important_traces)
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -61,11 +52,9 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        id_ = self.automate.unschedule_id('automatic_traces')
-        self.scheduler.remove_job(id_)
-        id_ = self.automate.unschedule_id('automatic_important_traces')
-        self.scheduler.remove_job(id_)
-        self.scheduler.shutdown(wait=False)
+        id_set = {'automatic_traces', 'automatic_important_traces'}
+        self.automate.unschedule_id(id_set)
+        self.automate.sheduler_shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])
     def trace(self):
