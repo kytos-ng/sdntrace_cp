@@ -19,8 +19,9 @@ class Scheduler:
     def add_callable(self, id_, func, trigger, args=None, kwargs=None,
                      **trigger_args):
         """Add job to scheduler"""
-        self.scheduler.add_job(func, trigger=trigger, args=args, kwargs=kwargs,
-                               id=id_, **trigger_args)
+        return self.scheduler.add_job(func, trigger=trigger, args=args,
+                                      kwargs=kwargs,
+                                      id=id_, **trigger_args)
 
     def remove_job(self, id_):
         """Remove job from scheduler"""

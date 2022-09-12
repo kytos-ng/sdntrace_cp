@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from napps.amlight.sdntrace_cp.automate import Automate
 
-from kytos.core import log
 from kytos.lib.helpers import get_switch_mock
 
 
@@ -629,7 +628,7 @@ class TestAutomate(TestCase):
         tracer = MagicMock()
         automate = Automate(tracer)
         try:
-            job = automate.schedule_traces(MagicMock, mock_settings)
+            job = automate.schedule_traces(mock_settings)
         except AttributeError:
             self.fail("automate.schedule_traces() raised an error")
         self.assertIsNotNone(job)
@@ -643,7 +642,7 @@ class TestAutomate(TestCase):
         tracer = MagicMock()
         automate = Automate(tracer)
         with self.assertRaises(AttributeError):
-            automate.schedule_traces(MagicMock, mock_settings)
+            automate.schedule_traces(mock_settings)
 
     @patch("napps.amlight.sdntrace_cp.automate.settings")
     def test_schedule_important_traces(self, mock_settings):
@@ -656,7 +655,7 @@ class TestAutomate(TestCase):
         tracer = MagicMock()
         automate = Automate(tracer)
         try:
-            job = automate.schedule_important_traces(MagicMock, mock_settings)
+            job = automate.schedule_important_traces(mock_settings)
         except AttributeError:
             self.fail("automate.schedule_important_traces() raised an error")
         self.assertIsNotNone(job)
@@ -672,21 +671,18 @@ class TestAutomate(TestCase):
         tracer = MagicMock()
         automate = Automate(tracer)
         with self.assertRaises(AttributeError):
-            automate.schedule_important_traces(MagicMock, mock_settings)
+            automate.schedule_important_traces(mock_settings)
 
-    def test_unschedule_id(self):
-        """Test unschedule_id with an existent id"""
+    def test_unschedule_ids(self):
+        """Test unschedule_ids with existent ids"""
         tracer = MagicMock()
         automate = Automate(tracer)
-        id_ = 'mock_id'
-        automate.schedule_id(id_)
+        automate.scheduler = MagicMock()
+        automate.schedule_id('mock_id')
+        automate.schedule_id('id_mocked')
+        self.assertEqual(len(automate.ids), 2)
+        id_ = {'mock_id'}
+        automate.unschedule_ids(id_set=id_)
         self.assertEqual(len(automate.ids), 1)
-        automate.unschedule_id({id_})
+        automate.unschedule_ids()
         self.assertEqual(len(automate.ids), 0)
-
-    def test_unschedule_id_fail(self):
-        """Test unschedule_id with a non-existent id"""
-        tracer = MagicMock()
-        automate = Automate(tracer)
-        automate.unschedule_id({'mock_id'})
-        self.assertLogs(log, level='warning')

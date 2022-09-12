@@ -34,9 +34,8 @@ class Main(KytosNApp):
         self.traces = {}
         self.last_id = 30000
         self.automate = Automate(self)
-        self.automate.schedule_traces(self.automate.run_traces)
-        important_traces = self.automate.run_important_traces
-        self.automate.schedule_important_traces(important_traces)
+        self.automate.schedule_traces()
+        self.automate.schedule_important_traces()
 
     def execute(self):
         """This method is executed right after the setup method execution.
@@ -52,8 +51,7 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        id_set = {'automatic_traces', 'automatic_important_traces'}
-        self.automate.unschedule_id(id_set)
+        self.automate.unschedule_ids()
         self.automate.sheduler_shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])

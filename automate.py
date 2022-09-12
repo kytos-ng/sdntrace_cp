@@ -174,7 +174,7 @@ class Automate:
         self.ids.add(id_)
         return id_
 
-    def schedule_traces(self, func, settings_=settings):
+    def schedule_traces(self, settings_=settings):
         """Check for invalid arguments from schedule"""
         if settings_.TRIGGER_SCHEDULE_TRACES:
             id_ = self.schedule_id('automatic_traces')
@@ -187,11 +187,12 @@ class Automate:
             trigger_args = {}
             trigger_args['kwargs'] = {'trigger': trigger}
             trigger_args['kwargs'].update(kwargs)
-            self.scheduler.add_callable(id_, func, **trigger_args['kwargs'])
+            self.scheduler.add_callable(id_, self.run_traces,
+                                        **trigger_args['kwargs'])
             return self.scheduler.get_job(id_)
         return None
 
-    def schedule_important_traces(self, func, settings_=settings):
+    def schedule_important_traces(self, settings_=settings):
         """Check for invalid important arguments from schedule"""
         if settings_.TRIGGER_IMPORTANT_CIRCUITS:
             id_ = self.schedule_id('automatic_important_traces')
@@ -204,18 +205,19 @@ class Automate:
             trigger_args = {}
             trigger_args['kwargs'] = {'trigger': trigger}
             trigger_args['kwargs'].update(kwargs)
-            self.scheduler.add_callable(id_, func, **trigger_args['kwargs'])
-            return self.scheduler.get_job(id_)
+            return self.scheduler.add_callable(id_,
+                                               self.run_important_traces,
+                                               **trigger_args['kwargs'])
         return None
 
-    def unschedule_id(self, id_set):
+    def unschedule_ids(self, id_set=None):
         """Remove ids to be unschedule"""
-        for id_ in id_set:
-            try:
-                self.ids.remove(id_)
-                self.scheduler.remove_job(id_)
-            except KeyError:
-                log.warning("This id: {id_} was not scheduled.")
+        if id_set is None:
+            id_set = self.ids.copy()
+        while id_set:
+            id_ = id_set.pop()
+            self.ids.remove(id_)
+            self.scheduler.remove_job(id_)
 
     def sheduler_shutdown(self, wait):
         """Shutdown scheduler"""
