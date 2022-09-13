@@ -9,7 +9,7 @@ from kytos.lib.helpers import get_switch_mock
 
 # pylint: disable=too-many-public-methods, duplicate-code, protected-access
 class TestAutomate(TestCase):
-    """Test claas Automate."""
+    """Test class Automate."""
 
     @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
     def test_get_circuit(self, mock_find_circuits):
@@ -601,3 +601,88 @@ class TestAutomate(TestCase):
         # Check if important trace dont trigger the event
         # It means that the CP trace is the same to the DP trace
         tracer.controller.buffers.app.put.assert_not_called()
+
+    def test_schedule_id(self):
+        """Test schedule_id with proper id type"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            automate.schedule_id('mock_id')
+            self.assertEqual(len(automate.ids), 1)
+        except AttributeError:
+            self.fail('schedule_id() raised an error')
+
+    def test_schedule_id_fail(self):
+        """Test schedule_id with non-string id"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_id(1)
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_traces(self, mock_settings):
+        """Test schedule_traces with the arguments from settings"""
+        mock_settings.TRIGGER_SCHEDULE_TRACES = True
+        mock_settings.SCHEDULE_ARGS = {'seconds': 120}
+        mock_settings.SCHEDULE_TRIGGER = 'interval'
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            job = automate.schedule_traces(mock_settings)
+        except AttributeError:
+            self.fail("automate.schedule_traces() raised an error")
+        self.assertIsNotNone(job)
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_traces_fail(self, mock_settings):
+        """Test schedule_traces with wrong arguments from settings"""
+        mock_settings.TRIGGER_SCHEDULE_TRACES = True
+        mock_settings.SCHEDULE_ARGS = 120
+        mock_settings.SCHEDULE_TRIGGER = {'interval'}
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_traces(mock_settings)
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_important_traces(self, mock_settings):
+        """
+        Test schedule_important_traces with the arguments from settings
+        """
+        mock_settings.TRIGGER_IMPORTANT_CIRCUITS = True
+        mock_settings.IMPORTANT_CIRCUITS_ARGS = {'seconds': 20}
+        mock_settings.IMPORTANT_CIRCUITS_TRIGGER = 'interval'
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        try:
+            job = automate.schedule_important_traces(mock_settings)
+        except AttributeError:
+            self.fail("automate.schedule_important_traces() raised an error")
+        self.assertIsNotNone(job)
+
+    @patch("napps.amlight.sdntrace_cp.automate.settings")
+    def test_schedule_important_traces_fail(self, mock_settings):
+        """
+        Test schedule_important_traces with wrong arguments from settings
+        """
+        mock_settings.TRIGGER_IMPORTANT_CIRCUITS = True
+        mock_settings.IMPORTANT_CIRCUITS_ARGS = 20
+        mock_settings.IMPORTANT_CIRCUITS_TRIGGER = {'interval'}
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        with self.assertRaises(AttributeError):
+            automate.schedule_important_traces(mock_settings)
+
+    def test_unschedule_ids(self):
+        """Test unschedule_ids with existent ids"""
+        tracer = MagicMock()
+        automate = Automate(tracer)
+        automate.scheduler = MagicMock()
+        automate.schedule_id('mock_id')
+        automate.schedule_id('id_mocked')
+        self.assertEqual(len(automate.ids), 2)
+        id_ = {'mock_id'}
+        automate.unschedule_ids(id_set=id_)
+        self.assertEqual(len(automate.ids), 1)
+        automate.unschedule_ids()
+        self.assertEqual(len(automate.ids), 0)

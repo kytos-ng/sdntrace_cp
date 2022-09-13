@@ -18,6 +18,8 @@
     # via
     #   -r requirements/dev.in
     #   kytos
+apscheduler==3.8.0
+    # via amlight-sdntrace-cp
 astroid==2.9.3
     # via pylint
 attrs==21.4.0
@@ -208,12 +210,19 @@ python-socketio==4.5.1
     # via
     #   flask-socketio
     #   kytos
+pytz==2021.3
+    # via
+    #   amlight-sdntrace-cp
+    #   apscheduler
+    #   tzlocal
 requests==2.27.0
     # via
     #   amlight-sdntrace
     #   amlight-sdntrace-cp
 six==1.16.0
     # via
+    #   amlight-sdntrace-cp
+    #   apscheduler
     #   flask-cors
     #   kytos
     #   python-engineio
@@ -246,6 +255,10 @@ typing-extensions==4.0.1
     #   kytos
     #   pydantic
     #   pylint
+tzlocal==2.1
+    # via
+    #   amlight-sdntrace-cp
+    #   apscheduler
 urllib3==1.26.7
     # via
     #   amlight-sdntrace
