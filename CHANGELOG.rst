@@ -7,6 +7,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 ********************************
 Added
 =====
+- Added ``apscheduler`` library to handle job scheduling
 
 Changed
 =======
@@ -16,6 +17,7 @@ Deprecated
 
 Removed
 =======
+- Removed dependency from `amlight/scheduler`
 
 Fixed
 =====

@@ -4,6 +4,7 @@ This module is intended to replace the usage of the napp
 called scheduler soon to be deprecated.
 """
 import pytz
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
@@ -25,7 +26,10 @@ class Scheduler:
 
     def remove_job(self, id_):
         """Remove job from scheduler"""
-        self.scheduler.remove_job(id_)
+        try:
+            self.scheduler.remove_job(id_)
+        except JobLookupError:
+            pass
 
     def shutdown(self, wait):
         """Shut down scheduler.

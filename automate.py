@@ -216,7 +216,7 @@ class Automate:
             id_set = self.ids.copy()
         while id_set:
             id_ = id_set.pop()
-            self.ids.remove(id_)
+            self.ids.discard(id_)
             self.scheduler.remove_job(id_)
 
     def sheduler_shutdown(self, wait):
