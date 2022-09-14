@@ -514,7 +514,6 @@ class TestAutomate(TestCase):
         )
 
     @patch("napps.amlight.sdntrace_cp.automate.requests")
-    # pylint: disable=no-self-use
     def test_run_important_traces__empty(self, mock_requests):
         """Test run_important_traces with empty circuits to run."""
         tracer = MagicMock()
@@ -559,7 +558,6 @@ class TestAutomate(TestCase):
     @patch("napps.amlight.sdntrace_cp.automate.requests")
     @patch("napps.amlight.sdntrace_cp.automate.settings")
     @patch("napps.amlight.sdntrace_cp.automate.Automate._check_trace")
-    # pylint: disable=no-self-use
     def test_run_important_traces__success(
         self, mock_check_trace, mock_settings, mock_requests
     ):
