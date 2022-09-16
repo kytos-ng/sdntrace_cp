@@ -7,7 +7,6 @@ from kytos.core import KytosEvent, log
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.scheduler import Scheduler
 from napps.amlight.sdntrace_cp.utils import clean_circuits, format_result
-from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
 
 
@@ -32,9 +31,7 @@ class Automate:
 
         for switch in self._tracer.controller.switches.copy().values():
             all_flows[switch] = []
-            if switch.ofp_version == '0x01':
-                controller_port = Port10.OFPP_CONTROLLER
-            else:
+            if switch.ofp_version == '0x04':
                 controller_port = Port13.OFPP_CONTROLLER
 
             try:
