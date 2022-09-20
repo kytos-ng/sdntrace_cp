@@ -9,4 +9,5 @@
 -e git+https://github.com/kytos-ng/sdntrace.git#egg=amlight_sdntrace
 -e git+https://github.com/kytos-ng/flow_stats.git#egg=amlight_flow_stats
 -e .[dev]
+pytest-asyncio==0.18.3
 black==22.3.0
