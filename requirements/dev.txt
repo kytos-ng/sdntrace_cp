@@ -10,7 +10,7 @@
     # via -r requirements/dev.in
 -e .
     # via -r requirements/dev.in
--e git+https://github.com/kytos-ng/kytos.git@feature/upgrade_dependencies#egg=kytos
+-e git+https://github.com/kytos-ng/kytos.git#egg=kytos
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/of_core.git#egg=kytos_of_core
     # via -r requirements/dev.in
