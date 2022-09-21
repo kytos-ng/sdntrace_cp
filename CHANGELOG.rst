@@ -18,6 +18,7 @@ Deprecated
 Removed
 =======
 - Removed dependency from `amlight/scheduler`
+- Removed support for OpenFlow 1.0
 
 Fixed
 =====
