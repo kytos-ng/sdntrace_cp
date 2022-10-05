@@ -5,8 +5,8 @@ import time
 import requests
 from kytos.core import KytosEvent, log
 from napps.amlight.sdntrace_cp import settings
+from napps.amlight.sdntrace_cp.scheduler import Scheduler
 from napps.amlight.sdntrace_cp.utils import clean_circuits, format_result
-from pyof.v0x01.common.phy_port import Port as Port10
 from pyof.v0x04.common.port import PortNo as Port13
 
 
@@ -17,6 +17,8 @@ class Automate:
         self._tracer = tracer
         self._circuits = []
         self.find_circuits()
+        self.ids = set()
+        self.scheduler = Scheduler()
 
     # pylint: disable=too-many-nested-blocks, too-many-branches
     def find_circuits(self):
@@ -29,9 +31,7 @@ class Automate:
 
         for switch in self._tracer.controller.switches.copy().values():
             all_flows[switch] = []
-            if switch.ofp_version == '0x01':
-                controller_port = Port10.OFPP_CONTROLLER
-            else:
+            if switch.ofp_version == '0x04':
                 controller_port = Port13.OFPP_CONTROLLER
 
             try:
@@ -163,6 +163,62 @@ class Automate:
                                     f'{circuit}'
                 event.content['message'] = content
                 self._tracer.controller.buffers.app.put(event)
+
+    def schedule_id(self, id_):
+        """Keep track of scheduled ids"""
+        if not isinstance(id_, str):
+            raise AttributeError("Invalid id type, for schedule.")
+        self.ids.add(id_)
+        return id_
+
+    def schedule_traces(self, settings_=settings):
+        """Check for invalid arguments from schedule"""
+        if settings_.TRIGGER_SCHEDULE_TRACES:
+            id_ = self.schedule_id('automatic_traces')
+            trigger = settings_.SCHEDULE_TRIGGER
+            kwargs = settings_.SCHEDULE_ARGS
+            if (not isinstance(kwargs, dict) or
+                    not isinstance(trigger, str)):
+                raise AttributeError("Invalid attributes for "
+                                     "job to be scheduled.")
+            trigger_args = {}
+            trigger_args['kwargs'] = {'trigger': trigger}
+            trigger_args['kwargs'].update(kwargs)
+            self.scheduler.add_callable(id_, self.run_traces,
+                                        **trigger_args['kwargs'])
+            return self.scheduler.get_job(id_)
+        return None
+
+    def schedule_important_traces(self, settings_=settings):
+        """Check for invalid important arguments from schedule"""
+        if settings_.TRIGGER_IMPORTANT_CIRCUITS:
+            id_ = self.schedule_id('automatic_important_traces')
+            trigger = settings_.IMPORTANT_CIRCUITS_TRIGGER
+            kwargs = settings_.IMPORTANT_CIRCUITS_ARGS
+            if (not isinstance(kwargs, dict) or
+                    not isinstance(trigger, str)):
+                raise AttributeError("Invalid attributes for "
+                                     "job to be scheduled.")
+            trigger_args = {}
+            trigger_args['kwargs'] = {'trigger': trigger}
+            trigger_args['kwargs'].update(kwargs)
+            return self.scheduler.add_callable(id_,
+                                               self.run_important_traces,
+                                               **trigger_args['kwargs'])
+        return None
+
+    def unschedule_ids(self, id_set=None):
+        """Remove ids to be unschedule"""
+        if id_set is None:
+            id_set = self.ids.copy()
+        while id_set:
+            id_ = id_set.pop()
+            self.ids.discard(id_)
+            self.scheduler.remove_job(id_)
+
+    def sheduler_shutdown(self, wait):
+        """Shutdown scheduler"""
+        self.scheduler.shutdown(wait)
 
     @staticmethod
     def check_step(circuit_step, trace_step):
