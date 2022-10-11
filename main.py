@@ -64,15 +64,12 @@ class Main(KytosNApp):
         entries = convert_entries(entries)
     
         dpid = entries['dpid']
-        self.stored_flows = Main.get_stored_flows([dpid], state='installed')
-        switches = [self.controller.get_switch_by_dpid(dpid)]
-        self.map_flows(switches)
-        print('stores1')
-        print(self.stored_flows)
-        result = self.tracepath(entries,switches[0])
+        self.stored_flows = Main.get_stored_flows(state='installed')
+        self.map_flows()
+        result = self.tracepath(entries)
         return jsonify(prepare_json(result))
 
-    def tracepath(self, entries,switch):
+    def tracepath(self, entries):
         """Trace a path for a packet represented by entries."""
         self.last_id += 1
         trace_id = self.last_id
@@ -87,6 +84,7 @@ class Main(KytosNApp):
                                  'type': trace_type}}
             if 'vlan_vid' in entries:
                 trace_step['in'].update({'vlan': entries['vlan_vid'][-1]})
+            switch = self.controller.get_switch_by_dpid(entries['dpid'])
             result = self.trace_step(switch, entries)
             if result:
                 out = {'port': result['out_port']}
