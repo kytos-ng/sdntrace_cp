@@ -34,6 +34,15 @@ def convert_entries(entries):
     return new_entries
 
 
+def convert_list_entries(entries):
+    """ Transform a list of entries dictionary in a list of plain dictionary suitable for
+        matching
+    :param entries: list(dict)
+    :return: list(plain dict)
+    """
+    return [convert_entries(entry) for entry in entries]
+
+
 def find_endpoint(switch, port):
     """ Find where switch/port is connected. If it is another switch,
     returns the interface it is connected to, otherwise returns None """
@@ -45,13 +54,16 @@ def find_endpoint(switch, port):
         return interface.link.endpoint_a
     return None
 
-
-def prepare_json(trace_result):
-    """Prepare return json for REST call."""
+def prepare_list_json(trace_result):
+    """Prepare return list of json for REST call."""
     result = []
     for trace_step in trace_result:
         result.append(trace_step['in'])
-    return {'result': result}
+    return result
+
+def prepare_json(trace_result):
+    """Prepare return json for REST call."""
+    return {'result': prepare_list_json(trace_result)}
 
 
 def format_result(trace):

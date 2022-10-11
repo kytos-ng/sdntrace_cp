@@ -13,8 +13,8 @@ from napps.kytos.of_core.v0x04.flow import Action
 from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
-from napps.amlight.sdntrace_cp.utils import (convert_entries, find_endpoint,
-                                             prepare_json)
+from napps.amlight.sdntrace_cp.utils import (convert_list_entries, find_endpoint,
+                                             prepare_json, prepare_list_json)
 
 
 class Main(KytosNApp):
@@ -58,15 +58,31 @@ class Main(KytosNApp):
         self.automate.sheduler_shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])
+    @rest('/traces', methods=['PUT'])
     def trace(self):
         """Trace a path."""
         entries = request.get_json()
-        entries = convert_entries(entries)
-    
-        dpid = entries['dpid']
+        return_list = True
+        if isinstance(entries, dict):
+            entries = [entries]
+            return_list = False
+        entries = convert_list_entries(entries)
         self.stored_flows = Main.get_stored_flows(state='installed')
         self.map_flows()
-        result = self.tracepath(entries)
+        if return_list:
+            results = {}
+            list_ready = []
+            for entry in entries:
+                if (entry['dpid'],entry['in_port']) in list_ready:
+                    continue
+                list_ready.append((entry['dpid'],entry['in_port']))
+                dpid = entry['dpid']
+                if dpid not in results:
+                    results[dpid] = []
+                result = prepare_list_json(self.tracepath(entry))                    
+                results[dpid].append(result)
+            return jsonify(results)
+        result = self.tracepath(entries[0])
         return jsonify(prepare_json(result))
 
     def tracepath(self, entries):
@@ -105,14 +121,8 @@ class Main(KytosNApp):
                         trace_type = 'trace'
                 else:
                     do_trace = False
-                    print('***************nodpid')
-                print('do_trace')
-                print(do_trace)
-                print(result)
-                print(trace_step)
             else:
                 do_trace = False
-                print('//////////////noresult')
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
