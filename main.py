@@ -3,18 +3,19 @@
 Run tracepaths on OpenFlow in the Control Plane
 """
 
-from datetime import datetime
-import requests
 import ipaddress
+from datetime import datetime
+
+import requests
 from flask import jsonify, request
-from kytos.core import KytosNApp, log, rest, switch
+from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import listen_to
-from napps.kytos.of_core.v0x04.flow import Action
-from napps.kytos.of_core.v0x04.match_fields import MatchFieldFactory
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
-from napps.amlight.sdntrace_cp.utils import (convert_list_entries, find_endpoint,
-                                             prepare_json, prepare_list_json)
+from napps.amlight.sdntrace_cp.utils import (convert_list_entries,
+                                             find_endpoint, prepare_json,
+                                             prepare_list_json)
+from napps.kytos.of_core.v0x04.flow import Action
 
 
 class Main(KytosNApp):
@@ -67,19 +68,18 @@ class Main(KytosNApp):
             entries = [entries]
             return_list = False
         entries = convert_list_entries(entries)
-        self.stored_flows = Main.get_stored_flows(state='installed')
-        self.map_flows()
+        self.get_stored_flows_and_map()
         if return_list:
             results = {}
             list_ready = []
             for entry in entries:
-                if (entry['dpid'],entry['in_port']) in list_ready:
+                if (entry['dpid'], entry['in_port']) in list_ready:
                     continue
-                list_ready.append((entry['dpid'],entry['in_port']))
+                list_ready.append((entry['dpid'], entry['in_port']))
                 dpid = entry['dpid']
                 if dpid not in results:
                     results[dpid] = []
-                result = prepare_list_json(self.tracepath(entry))                    
+                result = prepare_list_json(self.tracepath(entry))
                 results[dpid].append(result)
             return jsonify(results)
         result = self.tracepath(entries[0])
@@ -91,7 +91,6 @@ class Main(KytosNApp):
         trace_id = self.last_id
         trace_result = []
         trace_type = 'starting'
-
         do_trace = True
         while do_trace:
             trace_step = {'in': {'dpid': entries['dpid'],
@@ -143,7 +142,7 @@ class Main(KytosNApp):
 
         Match the given fields against the switch's list of flows."""
         flow, entries, port = self.match_and_apply(switch, entries)
-        
+
         if not flow or not port:
             return None
 
@@ -164,18 +163,18 @@ class Main(KytosNApp):
         if settings.FIND_CIRCUITS_IN_FLOWS:
             self.automate.find_circuits()
 
-    def map_flows(self, switches = None):
+    def map_flows(self, switches=None):
         """Map the flows in memory given the stored flows"""
         flows = {}
         if not switches:
-            switches = self.controller.switches.copy().values() 
+            switches = self.controller.switches.copy().values()
         for switch in switches:
             flows[switch.dpid] = []
-            flows_sw_dict = {flow_sw.id:flow_sw for flow_sw in switch.flows}
+            flows_sw_dict = {flow_sw.id: flow_sw for flow_sw in switch.flows}
             for flow_item in self.stored_flows[switch.dpid]:
-                id = flow_item['flow_id']
-                if id in flows_sw_dict:
-                    flow = flows_sw_dict[id]
+                id_ = flow_item['flow_id']
+                if id_ in flows_sw_dict:
+                    flow = flows_sw_dict[id_]
                     flow_item = flow_item['flow']
                     flow.cookie = flow_item['cookie']
                     flow.hard_timeout = flow_item['hard_timeout']
@@ -185,17 +184,19 @@ class Main(KytosNApp):
                     flow.actions = []
                     for action in flow_item['actions']:
                         action = Action.from_dict(action)
-                        flow.actions.append(action) 
-                    flows[switch.dpid].append(flow)          
-        self.stored_flows = flows 
+                        flow.actions.append(action)
+                    flows[switch.dpid].append(flow)
+        # pylint: disable=attribute-defined-outside-init
+        self.stored_flows = flows
 
     @staticmethod
-    def get_stored_flows(dpids:list = None, state:str = None):  
+    def get_stored_flows(dpids: list = None, state: str = None):
+        """Get stored flows from flow_manager napps."""
         api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
         if dpids:
             str_dpids = ''
             for dpid in dpids:
-                str_dpids += f'&dpid={dpid}' 
+                str_dpids += f'&dpid={dpid}'
             api_url += '/?'+str_dpids[1:]
         if state:
             char = '&' if dpids else '/?'
@@ -204,7 +205,15 @@ class Main(KytosNApp):
         flows_from_manager = result.json()
         return flows_from_manager
 
-    def do_match(flow, args):
+    def get_stored_flows_and_map(self, dpids: list = None, state: str = None):
+        """Get stored flows from flow_manager napp and
+        map witn flows on switches."""
+        # pylint: disable=attribute-defined-outside-init
+        self.stored_flows = Main.get_stored_flows(dpids, state)
+        self.map_flows()
+
+    @classmethod
+    def do_match(cls, flow, args):
         """Match a packet against this flow (OF1.3)."""
         # pylint: disable=consider-using-dict-items
         if len(flow.as_dict()['match']) == 0:
@@ -232,7 +241,8 @@ class Main(KytosNApp):
     def match_flows(self, switch, args, many=True):
         # pylint: disable=bad-staticmethod-argument
         """
-        Match the packet in request against the flows installed in the switch and stored according flow_manager.
+        Match the packet in request against the flows installed
+        in the switch and stored according flow_manager.
         Try the match with each flow, in other. If many is True, tries the
         match with all flows, if False, tries until the first match.
         :param args: packet data
@@ -240,14 +250,12 @@ class Main(KytosNApp):
                 first flow or not
         :return: If many, the list of matched flows, or the matched flow
         """
-        '''
-        stored_flows = Main.get_stored_flows([switch.dpid], state='installed')
-        self.stored_flows = self.map_flows(stored_flows, [switch])
-        '''         
+        if not self.stored_flows:
+            self.get_stored_flows_and_map()
         response = []
         try:
             for flow in self.stored_flows[switch.dpid]:
-                match = Main.do_match(flow,args)
+                match = Main.do_match(flow, args)
                 if match:
                     if many:
                         response.append(match)
@@ -259,7 +267,8 @@ class Main(KytosNApp):
         if not many and isinstance(response, list):
             return None
         return response
-        
+
+    # pylint: disable=redefined-outer-name
     def match_and_apply(self, switch, args):
         # pylint: disable=bad-staticmethod-argument
         """Match flows and apply actions.
@@ -288,6 +297,3 @@ class Main(KytosNApp):
                     if action_type == 'set_vlan':
                         args['vlan_vid'][-1] = action.vlan_id
         return flow, args, port
-
-
-        

@@ -68,11 +68,16 @@ class TestMain(TestCase):
                 {"OPTIONS", "HEAD", "PUT"},
                 "/api/amlight/sdntrace_cp/trace/ ",
             ),
+            (
+                {},
+                {"OPTIONS", "HEAD", "PUT"},
+                "/api/amlight/sdntrace_cp/traces/ ",
+            ),
         ]
         urls = self.get_napp_urls(self.napp)
         self.assertEqual(len(expected_urls), len(urls))
 
-    @patch("napps.amlight.flow_stats.main.Main.match_and_apply")
+    @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step(self, mock_flow_match):
         """Test trace_step success result."""
         mock_flow_match.return_value = ["1"], ["entries"], 1
@@ -109,7 +114,7 @@ class TestMain(TestCase):
             },
         )
 
-    @patch("napps.amlight.flow_stats.main.Main.match_and_apply")
+    @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step__no_endpoint(self, mock_flow_match):
         """Test trace_step without endpoints available for switch/port."""
         mock_flow_match.return_value = ["1"], ["entries"], 1
@@ -129,13 +134,23 @@ class TestMain(TestCase):
         mock_flow_match.assert_called_once()
         self.assertEqual(result, {"entries": ["entries"], "out_port": 1})
 
-    def test_trace_step__no_flow(self):
+    @patch("napps.amlight.sdntrace_cp.main.Main.map_flows")
+    def test_trace_step__no_flow(self, mock_stored_flows):
         """Test trace_step without flows for the switch."""
         switch = get_switch_mock("00:00:00:00:00:00:00:01")
         entries = MagicMock()
 
+        map_flow = {
+                "id": 1,
+                "priority": 10,
+        }
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [map_flow]
+        }
+
         result = self.napp.trace_step(switch, entries)
-        self.assertIsNone(result)
+        assert result is None
 
     @patch("napps.amlight.sdntrace_cp.main.Main.trace_step")
     def test_tracepath(self, mock_trace_step):
@@ -151,18 +166,17 @@ class TestMain(TestCase):
             "entries": entries,
         }
 
-        result = self.napp.tracepath(entries)
+        result = self.napp.tracepath(entries["trace"]["switch"])
 
-        self.assertEqual(result[0]["in"]["dpid"], "00:00:00:00:00:00:00:01")
-        self.assertEqual(result[0]["in"]["port"], 1)
-        self.assertEqual(result[0]["in"]["type"], "starting")
-        self.assertEqual(result[0]["in"]["vlan"], 100)
-        self.assertEqual(result[0]["out"]["port"], 3)
+        assert result[0]["in"]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0]["in"]["port"] == 1
+        assert result[0]["in"]["type"] == "starting"
+        assert result[0]["out"]["port"] == 3
 
-        self.assertEqual(result[1]["in"]["dpid"], "00:00:00:00:00:00:00:02")
-        self.assertEqual(result[1]["in"]["port"], 2)
-        self.assertEqual(result[1]["in"]["type"], "trace")
-        self.assertEqual(result[0]["out"]["port"], 3)
+        assert result[1]["in"]["dpid"] == "00:00:00:00:00:00:00:02"
+        assert result[1]["in"]["port"] == 2
+        assert result[1]["in"]["type"] == "trace"
+        assert result[1]["out"]["port"] == 3
 
     def test_has_loop(self):
         """Test has_loop to detect a tracepath with loop."""
@@ -271,16 +285,37 @@ class TestMain(TestCase):
 
         self.napp.automate.find_circuits.assert_not_called()
 
-    def test_trace(self):
+    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    def test_trace(self, mock_stored_flows):
         """Test trace rest call."""
         api = get_test_client(get_controller_mock(), self.napp)
         url = f"{self.server_name_url}/trace/"
 
         payload = {
             "trace": {
-                "switch": {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1},
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
                 "eth": {"dl_vlan": 100},
             }
+        }
+        stored_flows = {
+            "00:00:00:00:00:00:00:01": {
+                "flow": {
+                    "table_id": 0,
+                    "cookie": 84114964,
+                    "hard_timeout": 0,
+                    "idle_timeout": 0,
+                    "priority": 10,
+                },
+                "flow_id": 1,
+                "state": "installed",
+                "switch": "00:00:00:00:00:00:00:01",
+            }
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
         }
 
         response = api.put(
@@ -289,7 +324,174 @@ class TestMain(TestCase):
         current_data = json.loads(response.data)
         result = current_data["result"]
 
-        self.assertEqual(result[0]["dpid"], "00:00:00:00:00:00:00:01")
-        self.assertEqual(result[0]["port"], 1)
-        self.assertEqual(result[0]["type"], "starting")
-        self.assertEqual(result[0]["vlan"], 100)
+        assert result[0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0]["port"] == 1
+        assert result[0]["type"] == "starting"
+        assert result[0]["vlan"] == 100
+
+    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    def test_traces(self, mock_stored_flows):
+        """Test traces rest call for two traces with different switches."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "in_port": 1
+                        },
+                    "eth": {"dl_vlan": 100},
+                }
+            },
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:02",
+                        "in_port": 1},
+                    "eth": {"dl_vlan": 100},
+                }
+            }
+        ]
+
+        stored_flow = {
+                "id": 1,
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+        }
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flow]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result1 = current_data["00:00:00:00:00:00:00:01"]
+        result2 = current_data["00:00:00:00:00:00:00:02"]
+
+        assert result1[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result1[0][0]["port"] == 1
+        assert result1[0][0]["type"] == "starting"
+        assert result1[0][0]["vlan"] == 100
+
+        assert result2[0][0]["dpid"] == "00:00:00:00:00:00:00:02"
+        assert result2[0][0]["port"] == 1
+        assert result2[0][0]["type"] == "starting"
+        assert result2[0][0]["vlan"] == 100
+
+    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    def test_traces_same_switch(self, mock_stored_flows):
+        """Test traces rest call for two traces with samw switches."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "in_port": 1
+                    },
+                    "eth": {"dl_vlan": 100},
+                }
+            },
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "in_port": 2
+                    },
+                    "eth": {"dl_vlan": 100},
+                }
+            }
+        ]
+
+        stored_flow = {
+                "id": 1,
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+        }
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flow]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["00:00:00:00:00:00:00:01"]
+
+        assert len(current_data) == 1
+
+        assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0][0]["port"] == 1
+        assert result[0][0]["type"] == "starting"
+        assert result[0][0]["vlan"] == 100
+
+        assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[1][0]["port"] == 2
+        assert result[1][0]["type"] == "starting"
+        assert result[1][0]["vlan"] == 100
+
+    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    def test_traces_twice(self, mock_stored_flows):
+        """Test traces rest call for two equal traces."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "in_port": 1
+                        },
+                    "eth": {"dl_vlan": 100},
+                }
+            },
+            {
+                "trace": {
+                    "switch": {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "in_port": 1
+                        },
+                    "eth": {"dl_vlan": 100},
+                }
+            }
+        ]
+        stored_flow = {
+                "id": 1,
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+        }
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flow]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["00:00:00:00:00:00:00:01"]
+
+        assert len(current_data) == 1
+        assert len(result) == 1
+
+        assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0][0]["port"] == 1
+        assert result[0][0]["type"] == "starting"
+        assert result[0][0]["vlan"] == 100
