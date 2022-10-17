@@ -25,7 +25,7 @@ class TestUtils(TestCase):
             [{
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 1,
-                "vlan_vid": [100],
+                "dl_vlan": [100],
             }],
         )
 
@@ -44,7 +44,7 @@ class TestUtils(TestCase):
             {
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 1,
-                "vlan_vid": [100],
+                "dl_vlan": [100],
             },
         )
 
@@ -75,7 +75,7 @@ class TestUtils(TestCase):
                 "eth_src": "A",
                 "eth_dst": "B",
                 "eth_type": "C",
-                "vlan_vid": ["D"],
+                "dl_vlan": ["D"],
                 "ip4_src": "E",
                 "ip4_dst": "F",
                 "ip_tos": "G",

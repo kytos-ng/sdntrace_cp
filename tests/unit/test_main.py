@@ -134,19 +134,27 @@ class TestMain(TestCase):
         mock_flow_match.assert_called_once()
         self.assertEqual(result, {"entries": ["entries"], "out_port": 1})
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.map_flows")
+    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
     def test_trace_step__no_flow(self, mock_stored_flows):
         """Test trace_step without flows for the switch."""
         switch = get_switch_mock("00:00:00:00:00:00:00:01")
         entries = MagicMock()
 
-        map_flow = {
-                "id": 1,
+        stored_flows = {
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
                 "priority": 10,
+            },
+            "flow_id": 1,
+            "state": "installed",
+            "switch": "00:00:00:00:00:00:00:01",
         }
 
         mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [map_flow]
+            "00:00:00:00:00:00:00:01": [stored_flows]
         }
 
         result = self.napp.trace_step(switch, entries)

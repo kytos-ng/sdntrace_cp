@@ -7,7 +7,7 @@ TRANSLATE_NAMES = {
     'dl_src': 'eth_src',
     'dl_dst': 'eth_dst',
     'dl_type': 'eth_type',
-    'dl_vlan': 'vlan_vid',
+    'dl_vlan': 'dl_vlan',
     'nw_src': 'ip4_src',
     'nw_dst': 'ip4_dst',
     'nw_tos': 'ip_tos',
@@ -29,8 +29,8 @@ def convert_entries(entries):
                 new_entries[TRANSLATE_NAMES[field]] = value
             else:
                 new_entries[field] = value
-    if 'vlan_vid' in new_entries:
-        new_entries['vlan_vid'] = [new_entries['vlan_vid']]
+    if 'dl_vlan' in new_entries:
+        new_entries['dl_vlan'] = [new_entries['dl_vlan']]
     return new_entries
 
 
