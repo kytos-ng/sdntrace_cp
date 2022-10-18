@@ -62,7 +62,8 @@ class Main(KytosNApp):
         """Trace a path."""
         entries = request.get_json()
         entries = convert_entries(entries)
-        result = self.tracepath(entries)
+        stored_flows = self.get_stored_flows
+        result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
 
     @rest('/traces', methods=['PUT'])
@@ -70,6 +71,7 @@ class Main(KytosNApp):
         """For bulk requests."""
         entries = request.get_json()
         entries = convert_list_entries(entries)
+        stored_flows = self.get_stored_flows
         results = {}
         list_ready = []
         for entry in entries:
@@ -79,11 +81,11 @@ class Main(KytosNApp):
             dpid = entry['dpid']
             if dpid not in results:
                 results[dpid] = []
-            result = prepare_list_json(self.tracepath(entry))
+            result = prepare_list_json(self.tracepath(entry, stored_flows))
             results[dpid].append(result)
         return jsonify(results)
 
-    def tracepath(self, entries):
+    def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
         self.last_id += 1
         trace_id = self.last_id
@@ -98,7 +100,7 @@ class Main(KytosNApp):
             if 'dl_vlan' in entries:
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
-            result = self.trace_step(switch, entries)
+            result = self.trace_step(switch, entries, stored_flows)
             if result:
                 out = {'port': result['out_port']}
                 if 'dl_vlan' in result['entries']:
@@ -135,11 +137,15 @@ class Main(KytosNApp):
                 return True
         return False
 
-    def trace_step(self, switch, entries):
+    def trace_step(self, switch, entries, stored_flows):
         """Perform a trace step.
 
         Match the given fields against the switch's list of flows."""
-        flow, entries, port = self.match_and_apply(switch, entries)
+        flow, entries, port = self.match_and_apply(
+                                                    switch,
+                                                    entries,
+                                                    stored_flows
+                                                )
 
         if not flow or not port:
             return None
@@ -201,7 +207,7 @@ class Main(KytosNApp):
                     return False
         return flow
 
-    def match_flows(self, switch, args, many=True):
+    def match_flows(self, switch, args, stored_flows, many=True):
         # pylint: disable=bad-staticmethod-argument
         """
         Match the packet in request against the stored flows from flow_manager.
@@ -212,7 +218,6 @@ class Main(KytosNApp):
                 first flow or not
         :return: If many, the list of matched flows, or the matched flow
         """
-        stored_flows = self.get_stored_flows()
         response = []
         try:
             for flow in stored_flows[switch.dpid]:
@@ -230,13 +235,13 @@ class Main(KytosNApp):
         return response
 
     # pylint: disable=redefined-outer-name
-    def match_and_apply(self, switch, args):
+    def match_and_apply(self, switch, args, stored_flows):
         # pylint: disable=bad-staticmethod-argument
         """Match flows and apply actions.
         Match given packet (in args) against
         the stored flows (from flow_manager) and,
         if a match flow is found, apply its actions."""
-        flow = self.match_flows(switch, args, False)
+        flow = self.match_flows(switch, args, stored_flows, False)
         port = None
         actions = None
         # pylint: disable=too-many-nested-blocks

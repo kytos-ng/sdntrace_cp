@@ -101,7 +101,24 @@ class TestMain(TestCase):
 
         entries = MagicMock()
 
-        result = self.napp.trace_step(switch, entries)
+        stored_flows = {
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+            },
+            "flow_id": 1,
+            "state": "installed",
+            "switch": "00:00:00:00:00:00:00:01",
+        }
+
+        stored_flows_arg = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
+        }
+
+        result = self.napp.trace_step(switch, entries, stored_flows_arg)
 
         mock_flow_match.assert_called_once()
         self.assertEqual(
@@ -129,13 +146,29 @@ class TestMain(TestCase):
 
         entries = MagicMock()
 
-        result = self.napp.trace_step(switch, entries)
+        stored_flows = {
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+            },
+            "flow_id": 1,
+            "state": "installed",
+            "switch": "00:00:00:00:00:00:00:01",
+        }
+
+        stored_flows_arg = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
+        }
+
+        result = self.napp.trace_step(switch, entries, stored_flows_arg)
 
         mock_flow_match.assert_called_once()
         self.assertEqual(result, {"entries": ["entries"], "out_port": 1})
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
-    def test_trace_step__no_flow(self, mock_stored_flows):
+    def test_trace_step__no_flow(self):
         """Test trace_step without flows for the switch."""
         switch = get_switch_mock("00:00:00:00:00:00:00:01")
         entries = MagicMock()
@@ -153,11 +186,11 @@ class TestMain(TestCase):
             "switch": "00:00:00:00:00:00:00:01",
         }
 
-        mock_stored_flows.return_value = {
+        stored_flows_arg = {
             "00:00:00:00:00:00:00:01": [stored_flows]
         }
 
-        result = self.napp.trace_step(switch, entries)
+        result = self.napp.trace_step(switch, entries, stored_flows_arg)
         assert result is None
 
     @patch("napps.amlight.sdntrace_cp.main.Main.trace_step")
@@ -173,8 +206,27 @@ class TestMain(TestCase):
             "out_port": 3,
             "entries": entries,
         }
+        stored_flows = {
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+            },
+            "flow_id": 1,
+            "state": "installed",
+            "switch": "00:00:00:00:00:00:00:01",
+        }
 
-        result = self.napp.tracepath(entries["trace"]["switch"])
+        stored_flows_arg = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
+        }
+
+        result = self.napp.tracepath(
+                                        entries["trace"]["switch"],
+                                        stored_flows_arg
+                                    )
 
         assert result[0]["in"]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0]["in"]["port"] == 1

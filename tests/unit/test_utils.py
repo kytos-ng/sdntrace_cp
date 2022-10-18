@@ -48,41 +48,6 @@ class TestUtils(TestCase):
             },
         )
 
-    def test_convert_entries_translation(self):
-        """Verify convert entries with all translations."""
-
-        eth = {
-            "dl_src": "A",
-            "dl_dst": "B",
-            "dl_type": "C",
-            "dl_vlan": "D",
-            "nw_src": "E",
-            "nw_dst": "F",
-            "nw_tos": "G",
-            "nw_proto": "H",
-        }
-        dpid = {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1}
-        switch = {"switch": dpid, "eth": eth}
-        entries = {"trace": switch}
-
-        result = utils.convert_entries(entries)
-
-        self.assertEqual(
-            result,
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "in_port": 1,
-                "eth_src": "A",
-                "eth_dst": "B",
-                "eth_type": "C",
-                "dl_vlan": ["D"],
-                "ip4_src": "E",
-                "ip4_dst": "F",
-                "ip_tos": "G",
-                "ip_proto": "H",
-            },
-        )
-
     def test_prepare_json(self):
         """Verify prepare json with simple tracepath result."""
         trace_result = []
