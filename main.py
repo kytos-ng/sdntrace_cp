@@ -62,7 +62,7 @@ class Main(KytosNApp):
         """Trace a path."""
         entries = request.get_json()
         entries = convert_entries(entries)
-        stored_flows = self.get_stored_flows
+        stored_flows = self.get_stored_flows()
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
 
@@ -71,7 +71,7 @@ class Main(KytosNApp):
         """For bulk requests."""
         entries = request.get_json()
         entries = convert_list_entries(entries)
-        stored_flows = self.get_stored_flows
+        stored_flows = self.get_stored_flows()
         results = {}
         list_ready = []
         for entry in entries:
