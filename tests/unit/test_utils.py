@@ -11,6 +11,24 @@ from napps.amlight.sdntrace_cp import utils
 class TestUtils(TestCase):
     """Test utils.py functions."""
 
+    def test_convert_list_entries(self):
+        """Verify convert entries with a list of one example"""
+        eth = {"dl_vlan": 100}
+        dpid = {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1}
+        switch = {"switch": dpid, "eth": eth}
+        entries = {"trace": switch}
+
+        result = utils.convert_list_entries([entries])
+
+        self.assertEqual(
+            result,
+            [{
+                "dpid": "00:00:00:00:00:00:00:01",
+                "in_port": 1,
+                "dl_vlan": [100],
+            }],
+        )
+
     def test_convert_entries_vlan(self):
         """Verify convert entries with simple example with vlan."""
 
@@ -26,42 +44,7 @@ class TestUtils(TestCase):
             {
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 1,
-                "vlan_vid": [100],
-            },
-        )
-
-    def test_convert_entries_translation(self):
-        """Verify convert entries with all translations."""
-
-        eth = {
-            "dl_src": "A",
-            "dl_dst": "B",
-            "dl_type": "C",
-            "dl_vlan": "D",
-            "nw_src": "E",
-            "nw_dst": "F",
-            "nw_tos": "G",
-            "nw_proto": "H",
-        }
-        dpid = {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1}
-        switch = {"switch": dpid, "eth": eth}
-        entries = {"trace": switch}
-
-        result = utils.convert_entries(entries)
-
-        self.assertEqual(
-            result,
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "in_port": 1,
-                "eth_src": "A",
-                "eth_dst": "B",
-                "eth_type": "C",
-                "vlan_vid": ["D"],
-                "ip4_src": "E",
-                "ip4_dst": "F",
-                "ip_tos": "G",
-                "ip_proto": "H",
+                "dl_vlan": [100],
             },
         )
 
@@ -110,6 +93,50 @@ class TestUtils(TestCase):
                     },
                 ]
             },
+        )
+
+    def test_prepare_list_json(self):
+        """Verify prepare list with a simple tracepath result."""
+        trace_result = []
+        trace_step = {
+            "in": {
+                "dpid": "00:00:00:00:00:00:00:01",
+                "port": 1,
+                "time": "2022-06-01 01:01:01.100000",
+                "type": "starting",
+            }
+        }
+        trace_result.append(trace_step)
+
+        trace_step = {
+            "in": {
+                "dpid": "00:00:00:00:00:00:00:03",
+                "port": 3,
+                "time": "2022-06-01 01:01:01.100000",
+                "type": "trace",
+                "vlan": 100,
+            }
+        }
+        trace_result.append(trace_step)
+
+        result = utils.prepare_list_json(trace_result)
+
+        self.assertEqual(
+            result, [
+                    {
+                        "dpid": "00:00:00:00:00:00:00:01",
+                        "port": 1,
+                        "time": "2022-06-01 01:01:01.100000",
+                        "type": "starting",
+                    },
+                    {
+                        "dpid": "00:00:00:00:00:00:00:03",
+                        "port": 3,
+                        "time": "2022-06-01 01:01:01.100000",
+                        "type": "trace",
+                        "vlan": 100,
+                    },
+                ]
         )
 
     def test_prepare_json_empty(self):

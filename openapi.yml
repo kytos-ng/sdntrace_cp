@@ -86,12 +86,35 @@ paths:
                 type: object
                 properties:
                   result:
-                    type: object
-                    properties:
-                      trace_id:
-                        type: integer
-                        description: ID of the trace executed
-                        example: 30001
+                    type: array 
+                    items:
+                      type: object
+                      required:
+                        - dpid
+                        - port
+                        - time
+                        - type
+                      properties:
+                        dpid:
+                          type: string
+                          description: Switch datapath ID 
+                          example: 00:00:00:00:00:00:00:01
+                        port:
+                          type: integer
+                          description: Incoming port in the switch
+                          example: 1
+                        time:
+                          type: string
+                          description: Date time when the iteration was computed
+                          example: "2022-01-25 13:44:52.387021"
+                        type:
+                          type: string
+                          description: Type of the step. May be "starting" or "trace".
+                          example: "trace"
+                        vlan:
+                          type: integer
+                          description: VLAN ID
+                          example: 100
   /api/amlight/sdntrace_cp/trace/{trace_id}:
     get:
       summary: Get the result of a trace
@@ -145,3 +168,115 @@ paths:
                     type: string
                     description: "Elapsed time on this trace"
                     example: "0:00:00.256709"
+  /api/amlight/sdntrace_cp/traces:
+    put:
+      summary: Trace paths given switches
+      description: Trace a path starting with each switch given in a list as parameter.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  trace:
+                    type: object
+                    properties:
+                      switch:
+                        type: object
+                        properties:
+                          dpid:
+                            type: string
+                            description: Initial switch datapath ID
+                            example: 00:00:00:00:00:00:00:01
+                          in_port:
+                            type: integer
+                            description: Starting incoming port
+                            example: 1
+                      eth:
+                        type: object
+                        properties:
+                          dl_vlan:
+                            type: integer
+                            description: VLAN ID
+                            example: 100
+                          dl_type:
+                            type: string
+                            description: Ethernet type
+                          dl_src:
+                            type: string
+                            description: Source MAC address
+                          dl_dst:
+                            type: string
+                            description: Destination MAC address
+                      ip:
+                        type: object
+                        properties:
+                          nw_src:
+                            type: string
+                            description: Source IP
+                            example: 192.168.20.21
+                          nw_dst:
+                            type: string
+                            description: Destination IP
+                            example: 192.168.25.123
+                          nw_proto:
+                            type: integer
+                            description: IP protocol
+                            example: 6
+                          nw_tos:
+                            type: integer
+                            description: IP TOS
+                            example: 0
+                      tp:
+                        type: object
+                        properties:
+                          tp_src:
+                            type: integer
+                            description: Source transport port
+                            example: 8761
+                          tp_dst:
+                            type: integer
+                            description: Destination transport port
+                            example: 80
+      responses:
+        200:
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  switch:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - dpid
+                          - port
+                          - time
+                          - type
+                        properties:
+                          dpid:
+                            type: string
+                            description: Switch datapath ID 
+                            example: 00:00:00:00:00:00:00:01
+                          port:
+                            type: integer
+                            description: Incoming port in the switch
+                            example: 1
+                          time:
+                            type: string
+                            description: Date time when the iteration was computed
+                            example: "2022-01-25 13:44:52.387021"
+                          type:
+                            type: string
+                            description: Type of the step. May be "starting" or "trace".
+                            example: "trace"
+                          vlan:
+                            type: integer
+                            description: VLAN ID
+                            example: 100
