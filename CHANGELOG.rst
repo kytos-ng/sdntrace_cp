@@ -20,6 +20,7 @@ Removed
 =======
 - Removed dependency from `amlight/scheduler`
 - Removed support for OpenFlow 1.0
+- Unsubscribe to the `amlight/flow_stats.flows_updated` event
 
 Fixed
 =====
