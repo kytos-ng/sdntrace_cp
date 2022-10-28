@@ -52,8 +52,7 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = circuits
-
+        mock_find_circuits.return_value = circuits
         result = automate.get_circuit(circuit)
 
         mock_find_circuits.assert_called_once()
@@ -169,8 +168,7 @@ class TestAutomate(TestCase):
         self.assertFalse(result)
 
     @patch("napps.amlight.sdntrace_cp.automate.Automate.get_circuit")
-    @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
-    def test_check_trace(self, mock_find_circuits, mock_get_circuit):
+    def test_check_trace(self, mock_get_circuit):
         """Verify _check_trace with trace finding a valid circuit."""
         circuit_steps = [
             {
@@ -183,7 +181,6 @@ class TestAutomate(TestCase):
             },
         ]
         mock_get_circuit.return_value = circuit_steps
-
         trace = [
             {
                 "dpid": "00:00:00:00:00:00:00:01",
@@ -208,18 +205,15 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = []
         result = automate._check_trace(circuit, trace)
 
-        mock_find_circuits.assert_called_once()
         mock_get_circuit.assert_called_once()
         self.assertTrue(result)
 
     # pylint: disable=duplicate-code
     @patch("napps.amlight.sdntrace_cp.automate.Automate.get_circuit")
-    @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
     def test_check_trace__short_trace(
-        self, mock_find_circuits, mock_get_circuit
+        self, mock_get_circuit
     ):
         """Verify _check_trace if lenght of circuit steps is different from
         lenght of trace steps"""
@@ -255,17 +249,14 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = []
         result = automate._check_trace(circuit, trace)
 
-        mock_find_circuits.assert_called_once()
         mock_get_circuit.assert_called_once()
         self.assertFalse(result)
 
     @patch("napps.amlight.sdntrace_cp.automate.Automate.get_circuit")
-    @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
     def test_check_trace__wrong_steps(
-        self, mock_find_circuits, mock_get_circuit
+        self, mock_get_circuit
     ):
         """Verify _check_trace with circuit steps different
         from trace steps"""
@@ -305,16 +296,13 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = []
         result = automate._check_trace(circuit, trace)
 
-        mock_find_circuits.assert_called_once()
         mock_get_circuit.assert_called_once()
         self.assertFalse(result)
 
     @patch("napps.amlight.sdntrace_cp.automate.Automate.get_circuit")
-    @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
-    def test_check_trace__no_steps(self, mock_find_circuits, mock_get_circuit):
+    def test_check_trace__no_steps(self, mock_get_circuit):
         """Verify _check_trace with empty circuit steps."""
         circuit_steps = []
         mock_get_circuit.return_value = circuit_steps
@@ -330,10 +318,8 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = []
         result = automate._check_trace(circuit, trace)
 
-        mock_find_circuits.assert_called_once()
         mock_get_circuit.assert_called_once()
         self.assertFalse(result)
 
@@ -341,14 +327,14 @@ class TestAutomate(TestCase):
         """Test run_traces with empty circuits."""
         tracer = MagicMock()
         automate = Automate(tracer)
-        automate._circuits = []
 
         result = automate.run_traces()
 
         tracer.tracepath.assert_not_called()
         self.assertEqual(result, [])
 
-    def test_run_traces(self):
+    @patch("napps.amlight.sdntrace_cp.automate.Automate.find_circuits")
+    def test_run_traces(self, mock_find_circuits):
         """Test run_traces runnin tracepaths for all circuits."""
         trace_result = [
             {
@@ -375,7 +361,7 @@ class TestAutomate(TestCase):
         tracer.tracepath.return_value = trace_result
 
         automate = Automate(tracer)
-        automate._circuits = [
+        circuits = [
             {
                 "circuit": {
                     "dpid_a": "00:00:00:00:00:00:00:01",
@@ -404,22 +390,24 @@ class TestAutomate(TestCase):
             },
         ]
 
+        mock_find_circuits.return_value = circuits
         result = automate.run_traces()
 
         self.assertEqual(tracer.tracepath.call_count, 2)
-        self.assertEqual(result[0], automate._circuits[0])
-        self.assertEqual(result[1], automate._circuits[1])
+        self.assertEqual(result[0], circuits[0])
+        self.assertEqual(result[1], circuits[1])
 
     def test_find_circuits__empty(self):
         """Test find_circuits without switches."""
         tracer = MagicMock()
 
         automate = Automate(tracer)
-        automate.find_circuits()
+        circuits = automate.find_circuits()
 
-        self.assertEqual(automate._circuits, [])
+        self.assertEqual(circuits, [])
 
-    def test_find_circuits(self):
+    @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
+    def test_find_circuits(self, mock_stored_flows):
         """Test find_circuits successfully finding circuits
         for all switches."""
         trace_result = [
@@ -453,27 +441,26 @@ class TestAutomate(TestCase):
             get_switch_mock("00:00:00:00:00:00:00:04", 0x04),
         ]
         switches_dict = {}
+        stored = {}
         for switch in switches:
-            flow = MagicMock()
-            in_port = MagicMock()
-            in_port.value = 1
-            flow.match = {"in_port": in_port}
-            action = MagicMock()
-            action.action_type = "output"
-            action.port = 1
-            flow.actions = [action]
+            flow = {'flow': {}}
+            flow['flow']['match'] = {"in_port": 1}
+            action = {}
+            action['action_type'] = "output"
+            action['port'] = 1
+            flow['flow']['actions'] = [action]
             flows = [flow]
-            switch.generic_flows = flows
-            switches_dict[switch.id] = switch
+            stored[switch.dpid] = flows
+            switches_dict[switch.dpid] = switch
 
         automate._tracer.controller.switches = switches_dict
 
-        automate.find_circuits()
+        mock_stored_flows.return_value = stored
+        circuits = automate.find_circuits()
 
-        self.assertIsNotNone(automate._circuits)
+        self.assertIsNotNone(circuits)
 
-        self.assertEqual(len(automate._circuits), 4)
-        for item in automate._circuits:
+        for item in circuits:
             self.assertEqual(
                 item["circuit"][0]["dpid"], trace_result[0]["in"]["dpid"]
             )
@@ -497,20 +484,8 @@ class TestAutomate(TestCase):
             )
 
         self.assertEqual(
-            automate._circuits[0]["entries"]["trace"]["switch"]["dpid"],
+            circuits[0]["entries"]["trace"]["switch"]["dpid"],
             "00:00:00:00:00:00:00:01",
-        )
-        self.assertEqual(
-            automate._circuits[1]["entries"]["trace"]["switch"]["dpid"],
-            "00:00:00:00:00:00:00:02",
-        )
-        self.assertEqual(
-            automate._circuits[2]["entries"]["trace"]["switch"]["dpid"],
-            "00:00:00:00:00:00:00:03",
-        )
-        self.assertEqual(
-            automate._circuits[3]["entries"]["trace"]["switch"]["dpid"],
-            "00:00:00:00:00:00:00:04",
         )
 
     @patch("napps.amlight.sdntrace_cp.automate.requests")

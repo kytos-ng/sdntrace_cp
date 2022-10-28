@@ -1,7 +1,24 @@
 """Utility functions to be used in this Napp"""
 
+import requests
 from kytos.core import KytosEvent
 from napps.amlight.sdntrace_cp import settings
+
+
+def get_stored_flows(dpids: list = None, state: str = None):
+    """Get stored flows from flow_manager napps."""
+    api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
+    if dpids:
+        str_dpids = ''
+        for dpid in dpids:
+            str_dpids += f'&dpid={dpid}'
+        api_url += '/?'+str_dpids[1:]
+    if state:
+        char = '&' if dpids else '/?'
+        api_url += char+f'state={state}'
+    result = requests.get(api_url)
+    flows_from_manager = result.json()
+    return flows_from_manager
 
 
 def convert_entries(entries):

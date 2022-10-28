@@ -326,8 +326,7 @@ class TestMain(TestCase):
         self.napp.automate = MagicMock()
         self.napp.automate.find_circuits = MagicMock()
 
-        event = MagicMock()
-        self.napp.update_circuits(event)
+        self.napp.update_circuits()
 
         self.napp.automate.find_circuits.assert_called_once()
 
@@ -340,12 +339,11 @@ class TestMain(TestCase):
         self.napp.automate = MagicMock()
         self.napp.automate.find_circuits = MagicMock()
 
-        event = MagicMock()
-        self.napp.update_circuits(event)
+        self.napp.update_circuits()
 
         self.napp.automate.find_circuits.assert_not_called()
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     def test_trace(self, mock_stored_flows):
         """Test trace rest call."""
         api = get_test_client(get_controller_mock(), self.napp)
@@ -361,7 +359,6 @@ class TestMain(TestCase):
             }
         }
         stored_flows = {
-            "00:00:00:00:00:00:00:01": {
                 "flow": {
                     "table_id": 0,
                     "cookie": 84114964,
@@ -372,7 +369,6 @@ class TestMain(TestCase):
                 "flow_id": 1,
                 "state": "installed",
                 "switch": "00:00:00:00:00:00:00:01",
-            }
         }
         mock_stored_flows.return_value = {
             "00:00:00:00:00:00:00:01": [stored_flows]
@@ -389,7 +385,7 @@ class TestMain(TestCase):
         assert result[0]["type"] == "starting"
         assert result[0]["vlan"] == 100
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     def test_traces(self, mock_stored_flows):
         """Test traces rest call for two traces with different switches."""
         api = get_test_client(get_controller_mock(), self.napp)
@@ -445,7 +441,7 @@ class TestMain(TestCase):
         assert result2[0][0]["type"] == "starting"
         assert result2[0][0]["vlan"] == 100
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     def test_traces_same_switch(self, mock_stored_flows):
         """Test traces rest call for two traces with samw switches."""
         api = get_test_client(get_controller_mock(), self.napp)
@@ -503,7 +499,7 @@ class TestMain(TestCase):
         assert result[1][0]["type"] == "starting"
         assert result[1][0]["vlan"] == 100
 
-    @patch("napps.amlight.sdntrace_cp.main.Main.get_stored_flows")
+    @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     def test_traces_twice(self, mock_stored_flows):
         """Test traces rest call for two equal traces."""
         api = get_test_client(get_controller_mock(), self.napp)

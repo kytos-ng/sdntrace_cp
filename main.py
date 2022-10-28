@@ -6,16 +6,14 @@ Run tracepaths on OpenFlow in the Control Plane
 import ipaddress
 from datetime import datetime
 
-import requests
 from flask import jsonify, request
 from kytos.core import KytosNApp, log, rest
-from kytos.core.helpers import listen_to
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
-                                             find_endpoint, prepare_json,
-                                             prepare_list_json)
+                                             find_endpoint, get_stored_flows,
+                                             prepare_json, prepare_list_json)
 
 
 class Main(KytosNApp):
@@ -62,7 +60,7 @@ class Main(KytosNApp):
         """Trace a path."""
         entries = request.get_json()
         entries = convert_entries(entries)
-        stored_flows = self.get_stored_flows()
+        stored_flows = get_stored_flows()
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
 
@@ -71,7 +69,7 @@ class Main(KytosNApp):
         """For bulk requests."""
         entries = request.get_json()
         entries = convert_list_entries(entries)
-        stored_flows = self.get_stored_flows()
+        stored_flows = get_stored_flows()
         results = {}
         list_ready = []
         for entry in entries:
@@ -160,28 +158,11 @@ class Main(KytosNApp):
                 'out_port': port,
                 'entries': entries}
 
-    @listen_to('amlight/flow_stats.flows_updated')
-    def update_circuits(self, event):
+    def update_circuits(self):
         """Update the list of circuits after a flow change."""
         # pylint: disable=unused-argument
         if settings.FIND_CIRCUITS_IN_FLOWS:
             self.automate.find_circuits()
-
-    @staticmethod
-    def get_stored_flows(dpids: list = None, state: str = None):
-        """Get stored flows from flow_manager napps."""
-        api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
-        if dpids:
-            str_dpids = ''
-            for dpid in dpids:
-                str_dpids += f'&dpid={dpid}'
-            api_url += '/?'+str_dpids[1:]
-        if state:
-            char = '&' if dpids else '/?'
-            api_url += char+f'state={state}'
-        result = requests.get(api_url)
-        flows_from_manager = result.json()
-        return flows_from_manager
 
     @classmethod
     def do_match(cls, flow, args):
