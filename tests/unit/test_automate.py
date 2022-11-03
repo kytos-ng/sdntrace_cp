@@ -323,10 +323,14 @@ class TestAutomate(TestCase):
         mock_get_circuit.assert_called_once()
         self.assertFalse(result)
 
-    def test_run_traces__empty(self):
+    @patch("napps.amlight.sdntrace_cp.utils.requests")
+    def test_run_traces__empty(self, mock_request):
         """Test run_traces with empty circuits."""
         tracer = MagicMock()
         automate = Automate(tracer)
+
+        mock_json = MagicMock()
+        mock_request.get.return_value = mock_json
 
         result = automate.run_traces()
 
@@ -521,7 +525,13 @@ class TestAutomate(TestCase):
 
     @patch("napps.amlight.sdntrace_cp.automate.requests")
     @patch("napps.amlight.sdntrace_cp.automate.settings")
-    def test_run_important_traces(self, mock_settings, mock_requests):
+    @patch("napps.amlight.sdntrace_cp.utils.requests")
+    def test_run_important_traces(
+                                    self,
+                                    mock_request_get,
+                                    mock_settings,
+                                    mock_requests
+                                ):
         """Test run_important_traces if control plane trace result is
         different from the data plane trace."""
         mock_settings.IMPORTANT_CIRCUITS = [
@@ -547,6 +557,24 @@ class TestAutomate(TestCase):
 
         tracer = MagicMock()
         tracer.controller.buffers.app.put.side_effect = side_effect
+
+        flow = {
+            'flow': {
+                'match': {"in_port": 1},
+                'actions': [
+                    {'action_type': "output", 'port': 1}
+                ]
+            }
+        }
+        stored = {
+            "00:00:00:00:00:00:00:01": [flow],
+            "00:00:00:00:00:00:00:02": [flow],
+            "00:00:00:00:00:00:00:03": [flow],
+            "00:00:00:00:00:00:00:04": [flow]
+        }
+        mock_json = MagicMock()
+        mock_json.json.return_value = stored
+        mock_request_get.get.return_value = mock_json
 
         automate = Automate(tracer)
         automate.run_important_traces()
