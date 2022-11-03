@@ -6,7 +6,8 @@ import requests
 from kytos.core import KytosEvent, log
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.scheduler import Scheduler
-from napps.amlight.sdntrace_cp.utils import clean_circuits, format_result
+from napps.amlight.sdntrace_cp.utils import (clean_circuits, format_result,
+                                             get_stored_flows)
 from pyof.v0x04.common.port import PortNo as Port13
 
 
@@ -15,8 +16,6 @@ class Automate:
 
     def __init__(self, tracer):
         self._tracer = tracer
-        self._circuits = []
-        self.find_circuits()
         self.ids = set()
         self.scheduler = Scheduler()
 
@@ -24,42 +23,41 @@ class Automate:
     def find_circuits(self):
         """Discover all circuits in a topology.
 
-        Using the list of flows per switch, run control plane
+        Using the list of stored flows from flow_manager, run control plane
         traces to find a list of circuits."""
         all_flows = {}
         circuits = []
-
+        stored_flows = get_stored_flows()
         for switch in self._tracer.controller.switches.copy().values():
             all_flows[switch] = []
             if switch.ofp_version == '0x04':
                 controller_port = Port13.OFPP_CONTROLLER
 
             try:
-                for flow in switch.generic_flows:
+                for flow in stored_flows[switch.dpid]:
+                    flow = flow['flow']
+                    if 'match' not in flow:
+                        continue
                     action_ok = False
                     in_port_ok = False
-                    if 'in_port' in flow.match and flow.match['in_port'] != 0:
+                    if 'in_port' in flow['match'] \
+                            and flow['match']['in_port'] != 0:
                         in_port_ok = True
                     if in_port_ok:
-                        for action in flow.actions:
-                            if action.action_type == 'output' \
-                                    and action.port != controller_port:
+                        for action in flow['actions']:
+                            if action['action_type'] == 'output' \
+                                    and action['port'] != controller_port:
                                 action_ok = True
                     if action_ok:
                         all_flows[switch].append(flow)
             except AttributeError:
                 pass
-
         for switch, flows in all_flows.items():
             for flow in flows:
-                in_port = flow.match['in_port']
+                in_port = flow['match']['in_port']
                 vlan = None
-                if 'vlan_vid' in flow.match:
-                    vlan = flow.match['vlan_vid']
-                if switch.ofp_version == '0x04':
-                    in_port = in_port.value
-                    if vlan:
-                        vlan = vlan.value
+                if 'dl_vlan' in flow['match']:
+                    vlan = flow['match']['dl_vlan']
                 entries = {
                     'trace': {
                         'switch': {
@@ -74,14 +72,14 @@ class Automate:
                 result = self._tracer.tracepath(entries)
                 circuits.append({'circuit': format_result(result),
                                  'entries': entries})
-
-        self._circuits = clean_circuits(circuits, self._tracer.controller)
+        return clean_circuits(circuits, self._tracer.controller)
 
     def run_traces(self):
         """Run traces for all circuits."""
 
         results = []
-        for circuit in self._circuits:
+        circuits = self.find_circuits()
+        for circuit in circuits:
             entries = circuit['entries']
             result = self._tracer.tracepath(entries)
             try:
@@ -90,12 +88,13 @@ class Automate:
                     results.append(circuit)
             except KeyError:
                 results.append(circuit)
-        log.debug('Results %s, size %s', results, len(self._circuits))
+        log.debug('Results %s, size %s', results, len(circuits))
         return results
 
     def get_circuit(self, circuit):
         """Find the given circuit in the list of circuits."""
-        for steps in self._circuits:
+        circuits = self.find_circuits()
+        for steps in circuits:
             endpoint_a = steps['circuit'][0]
             endpoint_z = steps['circuit'][-1]
             # pylint: disable=too-many-boolean-expressions

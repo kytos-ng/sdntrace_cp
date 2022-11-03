@@ -4,7 +4,7 @@
   "name": "sdntrace_cp",
   "description": "Run tracepaths on OpenFlow in the Control Plane",
   "version": "2022.2.1",
-  "napp_dependencies": ["amlight/flow_stats"],
+  "napp_dependencies": [],
   "license": "MIT",
   "tags": [],
   "url": "https://github.com/amlight/sdntrace_cp.git"
