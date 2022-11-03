@@ -99,7 +99,7 @@ class Main(KytosNApp):
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
             if (switch is None) or \
-                    (switch.dpid not in list(stored_flows.keys())):
+                    (switch.dpid not in stored_flows):
                 result = None
             else:
                 result = self.trace_step(switch, entries, stored_flows)
