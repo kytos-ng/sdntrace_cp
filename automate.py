@@ -28,7 +28,6 @@ class Automate:
         all_flows = {}
         circuits = []
         stored_flows = get_stored_flows()
-
         for switch in self._tracer.controller.switches.copy().values():
             all_flows[switch] = []
             if switch.ofp_version == '0x04':
@@ -57,8 +56,8 @@ class Automate:
             for flow in flows:
                 in_port = flow['match']['in_port']
                 vlan = None
-                if 'vlan_vid' in flow['match']:
-                    vlan = flow['match']['vlan_vid']
+                if 'dl_vlan' in flow['match']:
+                    vlan = flow['match']['dl_vlan']
                 entries = {
                     'trace': {
                         'switch': {

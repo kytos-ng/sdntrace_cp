@@ -223,6 +223,13 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:01": [stored_flows]
         }
 
+        switch_01 = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
+        switch_01.is_enabled.return_value = True
+
+        self.napp.controller.switches = {
+            "00:00:00:00:00:00:00:01": switch_01
+        }
+
         result = self.napp.tracepath(
                                         entries["trace"]["switch"],
                                         stored_flows_arg
@@ -231,12 +238,10 @@ class TestMain(TestCase):
         assert result[0]["in"]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0]["in"]["port"] == 1
         assert result[0]["in"]["type"] == "starting"
-        assert result[0]["out"]["port"] == 3
 
         assert result[1]["in"]["dpid"] == "00:00:00:00:00:00:00:02"
         assert result[1]["in"]["port"] == 2
         assert result[1]["in"]["type"] == "trace"
-        assert result[1]["out"]["port"] == 3
 
     def test_has_loop(self):
         """Test has_loop to detect a tracepath with loop."""
