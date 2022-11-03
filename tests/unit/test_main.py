@@ -390,8 +390,9 @@ class TestMain(TestCase):
         assert result[0]["type"] == "starting"
         assert result[0]["vlan"] == 100
 
+    @patch("napps.amlight.sdntrace_cp.utils.requests")
     @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
-    def test_get_traces(self, mock_stored_flows):
+    def test_get_traces(self, mock_stored_flows, mock_request):
         """Test traces rest call."""
         api = get_test_client(get_controller_mock(), self.napp)
         url = f"{self.server_name_url}/traces/"
@@ -418,6 +419,9 @@ class TestMain(TestCase):
         mock_stored_flows.return_value = {
             "00:00:00:00:00:00:00:01": [stored_flow]
         }
+        mock_json = MagicMock()
+        mock_json.json.return_value = mock_stored_flows
+        mock_request.get.return_value = mock_json
 
         response = api.put(
             url, data=json.dumps(payload), content_type="application/json"

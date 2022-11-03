@@ -6,8 +6,6 @@ from napps.amlight.sdntrace_cp.automate import Automate
 
 from kytos.lib.helpers import get_switch_mock
 
-from flask import jsonify
-
 
 # pylint: disable=too-many-public-methods, duplicate-code, protected-access
 class TestAutomate(TestCase):
@@ -399,28 +397,6 @@ class TestAutomate(TestCase):
         self.assertEqual(result[0], circuits[0])
         self.assertEqual(result[1], circuits[1])
 
-    # pylint: disable=no-method-argument
-    def mocked_requests_get(*args):
-        """This method will be used by the mock to replace requests.get"""
-        flow = {
-            'flow': {
-                'match': {"in_port": 1},
-                'actions': [
-                    {
-                        'action_type': "output",
-                        'port': 1
-                    }
-                ]
-            }
-        }
-        flows_from_manager_mock = {
-            "00:00:00:00:00:00:00:01": [flow],
-            "00:00:00:00:00:00:00:02": [flow],
-            "00:00:00:00:00:00:00:03": [flow],
-            "00:00:00:00:00:00:00:04": [flow]
-        }
-        return jsonify(flows_from_manager_mock)
-
     @patch("napps.amlight.sdntrace_cp.utils.requests")
     def test_find_circuits(self, mock_request):
         """Test find_circuits successfully finding circuits
@@ -519,11 +495,16 @@ class TestAutomate(TestCase):
             "00:00:00:00:00:00:00:04",
         )
 
-    def test_find_circuits__empty(self):
+    @patch("napps.amlight.sdntrace_cp.utils.requests")
+    def test_find_circuits__empty(self, mock_request):
         """Test find_circuits without switches."""
         tracer = MagicMock()
 
         automate = Automate(tracer)
+
+        mock_json = MagicMock()
+        mock_request.get.return_value = mock_json
+
         circuits = automate.find_circuits()
 
         self.assertEqual(circuits, [])
