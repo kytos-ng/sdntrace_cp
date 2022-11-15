@@ -30,7 +30,6 @@ To install this NApp, first, make sure to have the same venv activated as you ha
 Requirements
 ============
 
-- `amlight/flow_stats <https://github.com/kytos-ng/flow_stats>`_
 - `amlight/scheduler <https://github.com/kytos-ng/scheduler>`_
 
 
@@ -39,9 +38,6 @@ Events
 
 Subscribed
 ----------
-
-- ``amlight/flow_stats.flows_updated``
-
 
 .. TAGs
 
