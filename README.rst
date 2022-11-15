@@ -38,8 +38,6 @@ Events
 
 Subscribed
 ----------
-
-
 .. TAGs
 
 .. |License| image:: https://img.shields.io/github/license/kytos-ng/sdntrace_cp.svg

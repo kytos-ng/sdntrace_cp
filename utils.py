@@ -5,7 +5,7 @@ from kytos.core import KytosEvent
 from napps.amlight.sdntrace_cp import settings
 
 
-def get_stored_flows(dpids: list = None, state: str = None):
+def get_stored_flows(dpids: list = None, state: str = "installed"):
     """Get stored flows from flow_manager napps."""
     api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
     if dpids:
