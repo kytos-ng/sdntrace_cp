@@ -5,27 +5,25 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 
 [UNRELEASED] - Under development
 ********************************
+
+[2022.3.0] - 2022-12-15
+***********************
+
 Added
 =====
 - Added ``apscheduler`` library to handle job scheduling
-- Added `PUT /traces` endpoint for bulk requests
+- Added ``PUT /traces`` endpoint for bulk requests
 
 Changed
 =======
-- The functionality `match_and_aply` has been added to match flows and apply actions. This matches a given packet against the stored flows.
-
-Deprecated
-==========
+- The functionality ``match_and_aply`` has been added to match flows and apply actions. This matches a given packet against the stored flows.
 
 Removed
 =======
-- Removed dependency from `amlight/scheduler`
+- Removed dependency from ``amlight/scheduler``
 - Removed support for OpenFlow 1.0
 - Unsubscribe to the `amlight/flow_stats.flows_updated` event
-- Dependency on `flow_stats` has been removed, from where the functionality `match_and_aply` was previously used.
-
-Fixed
-=====
+- Dependency on ``flow_stats`` has been removed, from where the functionality ``match_and_aply`` was previously used.
 
 Security
 ========
