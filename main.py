@@ -72,10 +72,10 @@ class Main(KytosNApp):
         stored_flows = get_stored_flows()
         results = {}
         list_ready = []
-        for entry in entries:
-            if (entry['dpid'], entry['in_port']) in list_ready:
+        for entry in entries:  
+            if entry in list_ready:
                 continue
-            list_ready.append((entry['dpid'], entry['in_port']))
+            list_ready.append(entry)
             dpid = entry['dpid']
             if dpid not in results:
                 results[dpid] = []
