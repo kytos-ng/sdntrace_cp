@@ -72,7 +72,7 @@ class Main(KytosNApp):
         stored_flows = get_stored_flows()
         results = {}
         list_ready = []
-        for entry in entries:  
+        for entry in entries:
             if entry in list_ready:
                 continue
             list_ready.append(entry)
