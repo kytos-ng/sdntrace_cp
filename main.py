@@ -73,9 +73,9 @@ class Main(KytosNApp):
         results = {}
         list_ready = []
         for entry in entries:
-            if (entry['dpid'], entry['in_port']) in list_ready:
+            if entry in list_ready:
                 continue
-            list_ready.append((entry['dpid'], entry['in_port']))
+            list_ready.append(entry)
             dpid = entry['dpid']
             if dpid not in results:
                 results[dpid] = []
