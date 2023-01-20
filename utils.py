@@ -63,6 +63,8 @@ def prepare_list_json(trace_result):
     result = []
     for trace_step in trace_result:
         result.append(trace_step['in'])
+    if result:
+        result[-1]["out"] = trace_result[-1].get("out")
     return result
 
 
