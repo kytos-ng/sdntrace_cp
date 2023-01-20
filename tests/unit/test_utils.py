@@ -68,7 +68,11 @@ class TestUtils(TestCase):
                 "time": "2022-06-01 01:01:01.100000",
                 "type": "trace",
                 "vlan": 100,
-            }
+            },
+            "out": {
+                "port": 1,
+                "vlan": 123,
+            },
         }
         trace_result.append(trace_step)
 
@@ -90,6 +94,7 @@ class TestUtils(TestCase):
                         "time": "2022-06-01 01:01:01.100000",
                         "type": "trace",
                         "vlan": 100,
+                        "out": {"port": 1, "vlan": 123},
                     },
                 ]
             },
@@ -115,7 +120,11 @@ class TestUtils(TestCase):
                 "time": "2022-06-01 01:01:01.100000",
                 "type": "trace",
                 "vlan": 100,
-            }
+            },
+            "out": {
+                "port": 1,
+                "vlan": 123,
+            },
         }
         trace_result.append(trace_step)
 
@@ -135,6 +144,7 @@ class TestUtils(TestCase):
                         "time": "2022-06-01 01:01:01.100000",
                         "type": "trace",
                         "vlan": 100,
+                        "out": {"port": 1, "vlan": 123},
                     },
                 ]
         )

@@ -391,10 +391,12 @@ class TestMain(TestCase):
         current_data = json.loads(response.data)
         result = current_data["result"]
 
+        assert len(result) == 1
         assert result[0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0]["port"] == 1
         assert result[0]["type"] == "starting"
         assert result[0]["vlan"] == 100
+        assert result[0]["out"] is None
 
     @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     @patch("napps.amlight.sdntrace_cp.utils.requests")
@@ -436,10 +438,13 @@ class TestMain(TestCase):
         current_data = json.loads(response.data)
         result1 = current_data["00:00:00:00:00:00:00:01"]
 
+        assert len(result1) == 1
+        assert len(result1[0]) == 1
         assert result1[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result1[0][0]["port"] == 1
         assert result1[0][0]["type"] == "starting"
         assert result1[0][0]["vlan"] == 100
+        assert result1[0][0]["out"] is None
 
     @patch("napps.amlight.sdntrace_cp.utils.get_stored_flows")
     @patch("napps.amlight.sdntrace_cp.utils.requests")
