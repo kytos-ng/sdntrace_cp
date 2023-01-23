@@ -523,6 +523,7 @@ class TestAutomate(TestCase):
 
         mock_requests.assert_not_called()
 
+    @patch("time.sleep", return_value=None)
     @patch("napps.amlight.sdntrace_cp.automate.requests")
     @patch("napps.amlight.sdntrace_cp.automate.settings")
     @patch("napps.amlight.sdntrace_cp.utils.requests")
@@ -530,7 +531,8 @@ class TestAutomate(TestCase):
                                     self,
                                     mock_request_get,
                                     mock_settings,
-                                    mock_requests
+                                    mock_requests,
+                                    _
                                 ):
         """Test run_important_traces if control plane trace result is
         different from the data plane trace."""
@@ -579,11 +581,12 @@ class TestAutomate(TestCase):
         automate = Automate(tracer)
         automate.run_important_traces()
 
+    @patch("time.sleep", return_value=None)
     @patch("napps.amlight.sdntrace_cp.automate.requests")
     @patch("napps.amlight.sdntrace_cp.automate.settings")
     @patch("napps.amlight.sdntrace_cp.automate.Automate._check_trace")
     def test_run_important_traces__success(
-        self, mock_check_trace, mock_settings, mock_requests
+        self, mock_check_trace, mock_settings, mock_requests, _
     ):
         """Verify run_important_traces if control plane trace result
         is the same result from the data plane trace."""
