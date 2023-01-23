@@ -123,7 +123,7 @@ class Main(KytosNApp):
                 else:
                     do_trace = False
             else:
-                do_trace = False
+                break
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
