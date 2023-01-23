@@ -73,9 +73,9 @@ class Main(KytosNApp):
         results = {}
         list_ready = []
         for entry in entries:
-            if (entry['dpid'], entry['in_port']) in list_ready:
+            if entry in list_ready:
                 continue
-            list_ready.append((entry['dpid'], entry['in_port']))
+            list_ready.append(entry)
             dpid = entry['dpid']
             if dpid not in results:
                 results[dpid] = []
@@ -123,7 +123,7 @@ class Main(KytosNApp):
                 else:
                     do_trace = False
             else:
-                do_trace = False
+                break
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result

@@ -13,6 +13,7 @@ Added
 =====
 - Added ``apscheduler`` library to handle job scheduling
 - Added ``PUT /traces`` endpoint for bulk requests
+- Added output port information to the trace result (last step) to help validating intra-switch EVCs
 
 Changed
 =======
