@@ -231,11 +231,10 @@ class Main(KytosNApp):
         if a match flow is found, apply its actions."""
         flow = self.match_flows(switch, args, stored_flows, False)
         port = None
-        actions = None
+        actions = []
         # pylint: disable=too-many-nested-blocks
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
-        actions = []
         if 'actions' in flow['flow']:
             actions = flow['flow']['actions']
         for action in actions:
