@@ -235,7 +235,9 @@ class Main(KytosNApp):
         # pylint: disable=too-many-nested-blocks
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
-        actions = flow['flow']['actions']
+        actions = []
+        if 'actions' in flow['flow']:
+            actions = flow['flow']['actions']
         for action in actions:
             action_type = action['action_type']
             if action_type == 'output':
