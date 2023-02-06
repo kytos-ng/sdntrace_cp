@@ -58,8 +58,11 @@ class Main(KytosNApp):
     @rest('/trace', methods=['PUT'])
     def trace(self):
         """Trace a path."""
+        result = []
         entries = request.get_json()
         entries = convert_entries(entries)
+        if not entries:
+            return "Bad request", 400
         stored_flows = get_stored_flows()
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
@@ -123,7 +126,7 @@ class Main(KytosNApp):
                 else:
                     do_trace = False
             else:
-                break
+                do_trace = False
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
