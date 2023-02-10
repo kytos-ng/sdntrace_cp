@@ -19,6 +19,9 @@ paths:
                   properties:
                     switch:
                       type: object
+                      required:
+                        - dpid
+                        - in_port
                       properties:
                         dpid:
                           type: string
@@ -185,6 +188,9 @@ paths:
                     properties:
                       switch:
                         type: object
+                        required:
+                          - dpid
+                          - in_port
                         properties:
                           dpid:
                             type: string
