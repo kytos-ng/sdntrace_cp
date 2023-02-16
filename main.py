@@ -97,11 +97,14 @@ class Main(KytosNApp):
                                  'type': trace_type}}
             if 'dl_vlan' in entries:
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
+
+            if trace_type == 'loop':
+                trace_result.append(trace_step)
+                break
+
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
-            if (switch is None) or \
-                    (switch.dpid not in stored_flows):
-                result = None
-            else:
+            result = None
+            if switch and (switch.dpid in stored_flows):
                 result = self.trace_step(switch, entries, stored_flows)
             if result:
                 out = {'port': result['out_port']}
@@ -113,17 +116,21 @@ class Main(KytosNApp):
                 if 'dpid' in result:
                     next_step = {'dpid': result['dpid'],
                                  'port': result['in_port']}
+                    entries = result['entries']
+                    entries['dpid'] = result['dpid']
+                    entries['in_port'] = result['in_port']
                     if self.has_loop(next_step, trace_result):
-                        do_trace = False
+                        trace_type = 'loop'
                     else:
-                        entries = result['entries']
-                        entries['dpid'] = result['dpid']
-                        entries['in_port'] = result['in_port']
                         trace_type = 'trace'
                 else:
+                    trace_type = 'last'
                     do_trace = False
             else:
-                break
+                trace_type = 'incomplete' if switch else 'last'
+                if trace_step['in']['type'] != 'starting':
+                    trace_step['in']['type'] = trace_type
+                do_trace = False
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
