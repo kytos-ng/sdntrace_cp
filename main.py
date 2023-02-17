@@ -103,9 +103,11 @@ class Main(KytosNApp):
                 break
 
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
-            result = None
-            if switch and (switch.dpid in stored_flows):
-                result = self.trace_step(switch, entries, stored_flows)
+            if not switch:
+                trace_step['in']['type'] = 'last'
+                trace_result.append(trace_step)
+                break
+            result = self.trace_step(switch, entries, stored_flows)
             if result:
                 out = {'port': result['out_port']}
                 if 'dl_vlan' in result['entries']:
@@ -124,12 +126,10 @@ class Main(KytosNApp):
                     else:
                         trace_type = 'trace'
                 else:
-                    trace_type = 'last'
+                    trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
-                trace_type = 'incomplete' if switch else 'last'
-                if trace_step['in']['type'] != 'starting':
-                    trace_step['in']['type'] = trace_type
+                trace_step['in']['type'] = 'incomplete'
                 do_trace = False
             trace_result.append(trace_step)
         self.traces.update({
@@ -210,6 +210,8 @@ class Main(KytosNApp):
                 first flow or not
         :return: If many, the list of matched flows, or the matched flow
         """
+        if switch.dpid not in stored_flows:
+            return None
         response = []
         try:
             for flow in stored_flows[switch.dpid]:
