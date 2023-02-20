@@ -13,7 +13,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             prepare_json, prepare_list_json)
+                                             prepare_json)
 
 
 class Main(KytosNApp):
@@ -70,19 +70,10 @@ class Main(KytosNApp):
         entries = request.get_json()
         entries = convert_list_entries(entries)
         stored_flows = get_stored_flows()
-        results = {}
-        list_ready = []
+        results = []
         for entry in entries:
-            if entry in list_ready:
-                continue
-            list_ready.append(entry)
-            dpid = entry['dpid']
-            result = prepare_list_json(self.tracepath(entry, stored_flows))
-            if result:
-                if dpid not in results:
-                    results[dpid] = []
-                results[dpid].append(result)
-        return jsonify(results)
+            results.append(self.tracepath(entry, stored_flows))
+        return jsonify(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
