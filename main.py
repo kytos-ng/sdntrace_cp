@@ -77,10 +77,11 @@ class Main(KytosNApp):
                 continue
             list_ready.append(entry)
             dpid = entry['dpid']
-            if dpid not in results:
-                results[dpid] = []
             result = prepare_list_json(self.tracepath(entry, stored_flows))
-            results[dpid].append(result)
+            if result:
+                if dpid not in results:
+                    results[dpid] = []
+                results[dpid].append(result)
         return jsonify(results)
 
     def tracepath(self, entries, stored_flows):
