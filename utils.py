@@ -59,7 +59,7 @@ def find_endpoint(switch, port):
 
 
 def _prepare_json(trace_result):
-    """Prepare return list of json for REST call."""
+    """Auxiliar function to return the json for REST call."""
     result = []
     for trace_step in trace_result:
         result.append(trace_step['in'])

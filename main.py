@@ -83,18 +83,19 @@ class Main(KytosNApp):
         trace_type = 'starting'
         do_trace = True
         while do_trace:
+            if 'dpid' not in entries or 'in_port' not in entries:
+                break
             trace_step = {'in': {'dpid': entries['dpid'],
                                  'port': entries['in_port'],
                                  'time': str(datetime.now()),
                                  'type': trace_type}}
             if 'dl_vlan' in entries:
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
+
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
-            if (switch is None) or \
-                    (switch.dpid not in stored_flows):
-                result = None
-            else:
-                result = self.trace_step(switch, entries, stored_flows)
+            if not switch:
+                break
+            result = self.trace_step(switch, entries, stored_flows)
             if result:
                 out = {'port': result['out_port']}
                 if 'dl_vlan' in result['entries']:
@@ -106,6 +107,7 @@ class Main(KytosNApp):
                     next_step = {'dpid': result['dpid'],
                                  'port': result['in_port']}
                     if self.has_loop(next_step, trace_result):
+                        # Loop
                         do_trace = False
                     else:
                         entries = result['entries']
@@ -113,8 +115,11 @@ class Main(KytosNApp):
                         entries['in_port'] = result['in_port']
                         trace_type = 'trace'
                 else:
+                    if trace_type != 'starting':
+                        trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
+                # Incomplete
                 break
             trace_result.append(trace_step)
         self.traces.update({
@@ -196,6 +201,8 @@ class Main(KytosNApp):
         :return: If many, the list of matched flows, or the matched flow
         """
         response = []
+        if switch.dpid not in stored_flows:
+            return None
         try:
             for flow in stored_flows[switch.dpid]:
                 match = Main.do_match(flow, args)
