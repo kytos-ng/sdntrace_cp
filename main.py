@@ -115,8 +115,7 @@ class Main(KytosNApp):
                         entries['in_port'] = result['in_port']
                         trace_type = 'trace'
                 else:
-                    if trace_type != 'starting':
-                        trace_step['in']['type'] = 'last'
+                    trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
                 # Incomplete

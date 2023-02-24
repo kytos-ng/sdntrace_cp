@@ -388,7 +388,7 @@ class TestMain(TestCase):
         assert len(result) == 1
         assert result[0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0]["port"] == 1
-        assert result[0]["type"] == "starting"
+        assert result[0]["type"] == "last"
         assert result[0]["vlan"] == 100
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
@@ -438,7 +438,7 @@ class TestMain(TestCase):
         assert len(result1[0]) == 1
         assert result1[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result1[0][0]["port"] == 1
-        assert result1[0][0]["type"] == "starting"
+        assert result1[0][0]["type"] == "last"
         assert result1[0][0]["vlan"] == 100
         assert result1[0][0]["out"] == {"port": 2}
 
@@ -496,12 +496,12 @@ class TestMain(TestCase):
 
         assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0][0]["port"] == 1
-        assert result[0][0]["type"] == "starting"
+        assert result[0][0]["type"] == "last"
         assert result[0][0]["vlan"] == 100
         assert result[0][0]["out"] == {"port": 2, "vlan": 100}
 
         assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:02"
         assert result[1][0]["port"] == 1
-        assert result[1][0]["type"] == "starting"
+        assert result[1][0]["type"] == "last"
         assert result[1][0]["vlan"] == 100
         assert result[1][0]["out"] == {"port": 2, "vlan": 100}
