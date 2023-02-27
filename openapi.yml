@@ -248,8 +248,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  switch:
-                    type: array
+                  result:
+                    type: array 
                     items:
                       type: array
                       items:

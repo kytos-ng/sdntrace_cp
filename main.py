@@ -13,7 +13,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             prepare_json, prepare_list_json)
+                                             prepare_json)
 
 
 class Main(KytosNApp):
@@ -70,18 +70,10 @@ class Main(KytosNApp):
         entries = request.get_json()
         entries = convert_list_entries(entries)
         stored_flows = get_stored_flows()
-        results = {}
-        list_ready = []
+        results = []
         for entry in entries:
-            if entry in list_ready:
-                continue
-            list_ready.append(entry)
-            dpid = entry['dpid']
-            if dpid not in results:
-                results[dpid] = []
-            result = prepare_list_json(self.tracepath(entry, stored_flows))
-            results[dpid].append(result)
-        return jsonify(results)
+            results.append(self.tracepath(entry, stored_flows))
+        return jsonify(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
@@ -91,18 +83,19 @@ class Main(KytosNApp):
         trace_type = 'starting'
         do_trace = True
         while do_trace:
+            if 'dpid' not in entries or 'in_port' not in entries:
+                break
             trace_step = {'in': {'dpid': entries['dpid'],
                                  'port': entries['in_port'],
                                  'time': str(datetime.now()),
                                  'type': trace_type}}
             if 'dl_vlan' in entries:
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
+
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
-            if (switch is None) or \
-                    (switch.dpid not in stored_flows):
-                result = None
-            else:
-                result = self.trace_step(switch, entries, stored_flows)
+            if not switch:
+                break
+            result = self.trace_step(switch, entries, stored_flows)
             if result:
                 out = {'port': result['out_port']}
                 if 'dl_vlan' in result['entries']:
@@ -114,6 +107,7 @@ class Main(KytosNApp):
                     next_step = {'dpid': result['dpid'],
                                  'port': result['in_port']}
                     if self.has_loop(next_step, trace_result):
+                        # Loop
                         do_trace = False
                     else:
                         entries = result['entries']
@@ -121,8 +115,10 @@ class Main(KytosNApp):
                         entries['in_port'] = result['in_port']
                         trace_type = 'trace'
                 else:
+                    trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
+                # Incomplete
                 break
             trace_result.append(trace_step)
         self.traces.update({
@@ -204,6 +200,8 @@ class Main(KytosNApp):
         :return: If many, the list of matched flows, or the matched flow
         """
         response = []
+        if switch.dpid not in stored_flows:
+            return None
         try:
             for flow in stored_flows[switch.dpid]:
                 match = Main.do_match(flow, args)
