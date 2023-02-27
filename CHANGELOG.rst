@@ -9,18 +9,9 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [2022.3.1] - 2023-02-24
 ***********************
 
-Added
-=====
-
 Changed
 =======
 - ``PUT /traces`` will return the results in order, without aggregating them by `dpid`. Also, failed traces are not omitted.
-
-Removed
-=======
-
-Fixed
-=====
 
 [2022.3.0] - 2022-12-15
 ***********************
