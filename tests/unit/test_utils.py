@@ -128,7 +128,7 @@ class TestUtils(TestCase):
         }
         trace_result.append(trace_step)
 
-        result = utils.prepare_list_json(trace_result)
+        result = utils._prepare_json(trace_result)
 
         self.assertEqual(
             result, [

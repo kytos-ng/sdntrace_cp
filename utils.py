@@ -65,8 +65,8 @@ def find_endpoint(switch, port):
     return None
 
 
-def prepare_list_json(trace_result):
-    """Prepare return list of json for REST call."""
+def _prepare_json(trace_result):
+    """Auxiliar function to return the json for REST call."""
     result = []
     for trace_step in trace_result:
         result.append(trace_step['in'])
@@ -77,7 +77,13 @@ def prepare_list_json(trace_result):
 
 def prepare_json(trace_result):
     """Prepare return json for REST call."""
-    return {'result': prepare_list_json(trace_result)}
+    result = []
+    if trace_result and isinstance(trace_result[0], list):
+        for trace in trace_result:
+            result.append(_prepare_json(trace))
+    else:
+        result = _prepare_json(trace_result)
+    return {'result': result}
 
 
 def format_result(trace):

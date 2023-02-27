@@ -3,7 +3,7 @@
   "username": "amlight",
   "name": "sdntrace_cp",
   "description": "Run tracepaths on OpenFlow in the Control Plane",
-  "version": "2022.3.0",
+  "version": "2022.3.1",
   "napp_dependencies": [],
   "license": "MIT",
   "tags": [],
