@@ -16,6 +16,8 @@ paths:
               properties:
                 trace:
                   type: object
+                  required:
+                    - switch
                   properties:
                     switch:
                       type: object
@@ -185,6 +187,8 @@ paths:
                 properties:
                   trace:
                     type: object
+                    required:
+                      - switch
                     properties:
                       switch:
                         type: object
