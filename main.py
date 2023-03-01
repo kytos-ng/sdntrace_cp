@@ -58,8 +58,11 @@ class Main(KytosNApp):
     @rest('/trace', methods=['PUT'])
     def trace(self):
         """Trace a path."""
+        result = []
         entries = request.get_json()
         entries = convert_entries(entries)
+        if not entries:
+            return "Bad request", 400
         stored_flows = get_stored_flows()
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
@@ -226,11 +229,12 @@ class Main(KytosNApp):
         if a match flow is found, apply its actions."""
         flow = self.match_flows(switch, args, stored_flows, False)
         port = None
-        actions = None
+        actions = []
         # pylint: disable=too-many-nested-blocks
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
-        actions = flow['flow']['actions']
+        if 'actions' in flow['flow']:
+            actions = flow['flow']['actions']
         for action in actions:
             action_type = action['action_type']
             if action_type == 'output':

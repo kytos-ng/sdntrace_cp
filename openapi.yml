@@ -115,6 +115,13 @@ paths:
                           type: integer
                           description: VLAN ID
                           example: 100
+        400:
+          description: "Parameter 'dpid' and/or 'in_port' is missing"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Bad request
   /api/amlight/sdntrace_cp/trace/{trace_id}:
     get:
       summary: Get the result of a trace
