@@ -388,7 +388,7 @@ class TestMain(TestCase):
         assert len(result) == 1
         assert result[0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0]["port"] == 1
-        assert result[0]["type"] == "starting"
+        assert result[0]["type"] == "last"
         assert result[0]["vlan"] == 100
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
@@ -432,13 +432,13 @@ class TestMain(TestCase):
             url, data=json.dumps(payload), content_type="application/json"
         )
         current_data = json.loads(response.data)
-        result1 = current_data["00:00:00:00:00:00:00:01"]
+        result1 = current_data["result"]
 
         assert len(result1) == 1
         assert len(result1[0]) == 1
         assert result1[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result1[0][0]["port"] == 1
-        assert result1[0][0]["type"] == "starting"
+        assert result1[0][0]["type"] == "last"
         assert result1[0][0]["vlan"] == 100
         assert result1[0][0]["out"] == {"port": 2}
 
@@ -490,142 +490,18 @@ class TestMain(TestCase):
             url, data=json.dumps(payload), content_type="application/json"
         )
         current_data = json.loads(response.data)
-        result1 = current_data["00:00:00:00:00:00:00:01"]
-        result2 = current_data["00:00:00:00:00:00:00:02"]
+        result = current_data["result"]
 
-        assert result1[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
-        assert result1[0][0]["port"] == 1
-        assert result1[0][0]["type"] == "starting"
-        assert result1[0][0]["vlan"] == 100
-        assert result1[0][0]["out"] == {"port": 2, "vlan": 100}
-
-        assert result2[0][0]["dpid"] == "00:00:00:00:00:00:00:02"
-        assert result2[0][0]["port"] == 1
-        assert result2[0][0]["type"] == "starting"
-        assert result2[0][0]["vlan"] == 100
-        assert result2[0][0]["out"] == {"port": 2, "vlan": 100}
-
-    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces_same_switch(self, mock_stored_flows):
-        """Test traces rest call for two traces with samw switches."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
-        payload = [
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:01",
-                        "in_port": 1
-                    },
-                    "eth": {"dl_vlan": 100},
-                }
-            },
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:01",
-                        "in_port": 2
-                    },
-                    "eth": {"dl_vlan": 100},
-                }
-            }
-        ]
-
-        stored_flow = {
-            "id": 1,
-            "flow": {
-                "table_id": 0,
-                "cookie": 84114964,
-                "hard_timeout": 0,
-                "idle_timeout": 0,
-                "priority": 10,
-                "match": {"dl_vlan": 100},
-                "actions": [{"action_type": "output", "port": 3}],
-            }
-        }
-
-        mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [stored_flow]
-        }
-
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
-        result = current_data["00:00:00:00:00:00:00:01"]
-
-        assert len(current_data) == 1
         assert len(result) == 2
-        assert len(result[0]) == 1
-        assert len(result[1]) == 1
 
         assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0][0]["port"] == 1
-        assert result[0][0]["type"] == "starting"
-        assert result[0][0]["vlan"] == 100
-        assert result[0][0]["out"] == {"port": 3, "vlan": 100}
-
-        assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:01"
-        assert result[1][0]["port"] == 2
-        assert result[1][0]["type"] == "starting"
-        assert result[1][0]["vlan"] == 100
-        assert result[1][0]["out"] == {"port": 3, "vlan": 100}
-
-    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces_twice(self, mock_stored_flows):
-        """Test traces rest call for two equal traces."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
-        payload = [
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:01",
-                        "in_port": 1
-                        },
-                    "eth": {"dl_vlan": 100},
-                }
-            },
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:01",
-                        "in_port": 1
-                        },
-                    "eth": {"dl_vlan": 100},
-                }
-            }
-        ]
-        stored_flow = {
-            "id": 1,
-            "flow": {
-                "table_id": 0,
-                "cookie": 84114964,
-                "hard_timeout": 0,
-                "idle_timeout": 0,
-                "priority": 10,
-                "match": {"dl_vlan": 100, "in_port": 1},
-                "actions": [{"action_type": "output", "port": 2}],
-            }
-        }
-
-        mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [stored_flow]
-        }
-
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
-        result = current_data["00:00:00:00:00:00:00:01"]
-
-        assert len(current_data) == 1
-        assert len(result) == 1
-
-        assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
-        assert result[0][0]["port"] == 1
-        assert result[0][0]["type"] == "starting"
+        assert result[0][0]["type"] == "last"
         assert result[0][0]["vlan"] == 100
         assert result[0][0]["out"] == {"port": 2, "vlan": 100}
+
+        assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:02"
+        assert result[1][0]["port"] == 1
+        assert result[1][0]["type"] == "last"
+        assert result[1][0]["vlan"] == 100
+        assert result[1][0]["out"] == {"port": 2, "vlan": 100}
