@@ -9,6 +9,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Fixed
 =====
 - Check the ``actions`` field in flows when running Sdntrace to avoid KeyError.
+- In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
 
 [2022.3.1] - 2023-02-27
 ***********************
