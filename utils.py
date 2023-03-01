@@ -34,6 +34,8 @@ def convert_entries(entries):
             new_entries[field] = value
     if 'dl_vlan' in new_entries:
         new_entries['dl_vlan'] = [new_entries['dl_vlan']]
+    if ('dpid' not in new_entries) or ('in_port' not in new_entries):
+        new_entries = {}
     return new_entries
 
 
@@ -43,7 +45,12 @@ def convert_list_entries(entries):
     :param entries: list(dict)
     :return: list(plain dict)
     """
-    return [convert_entries(entry) for entry in entries]
+    new_entries = []
+    for entry in entries:
+        new_entry = convert_entries(entry)
+        if new_entry:
+            new_entries.append(new_entry)
+    return new_entries
 
 
 def find_endpoint(switch, port):
