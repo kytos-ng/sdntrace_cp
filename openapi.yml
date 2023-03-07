@@ -16,9 +16,14 @@ paths:
               properties:
                 trace:
                   type: object
+                  required:
+                    - switch
                   properties:
                     switch:
                       type: object
+                      required:
+                        - dpid
+                        - in_port
                       properties:
                         dpid:
                           type: string
@@ -189,9 +194,14 @@ paths:
                 properties:
                   trace:
                     type: object
+                    required:
+                      - switch
                     properties:
                       switch:
                         type: object
+                        required:
+                          - dpid
+                          - in_port
                         properties:
                           dpid:
                             type: string
