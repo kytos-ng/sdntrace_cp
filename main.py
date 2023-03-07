@@ -13,7 +13,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             prepare_json, prepare_list_json)
+                                             prepare_json)
 
 
 class Main(KytosNApp):
@@ -58,8 +58,11 @@ class Main(KytosNApp):
     @rest('/trace', methods=['PUT'])
     def trace(self):
         """Trace a path."""
+        result = []
         entries = request.get_json()
         entries = convert_entries(entries)
+        if not entries:
+            return "Bad request", 400
         stored_flows = get_stored_flows()
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
@@ -70,18 +73,10 @@ class Main(KytosNApp):
         entries = request.get_json()
         entries = convert_list_entries(entries)
         stored_flows = get_stored_flows()
-        results = {}
-        list_ready = []
+        results = []
         for entry in entries:
-            if entry in list_ready:
-                continue
-            list_ready.append(entry)
-            dpid = entry['dpid']
-            if dpid not in results:
-                results[dpid] = []
-            result = prepare_list_json(self.tracepath(entry, stored_flows))
-            results[dpid].append(result)
-        return jsonify(results)
+            results.append(self.tracepath(entry, stored_flows))
+        return jsonify(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
@@ -91,16 +86,14 @@ class Main(KytosNApp):
         trace_type = 'starting'
         do_trace = True
         while do_trace:
+            if 'dpid' not in entries or 'in_port' not in entries:
+                break
             trace_step = {'in': {'dpid': entries['dpid'],
                                  'port': entries['in_port'],
                                  'time': str(datetime.now()),
                                  'type': trace_type}}
             if 'dl_vlan' in entries:
                 trace_step['in'].update({'vlan': entries['dl_vlan'][-1]})
-
-            if trace_type == 'loop':
-                trace_result.append(trace_step)
-                break
 
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
             if not switch:
@@ -122,7 +115,9 @@ class Main(KytosNApp):
                     entries['dpid'] = result['dpid']
                     entries['in_port'] = result['in_port']
                     if self.has_loop(next_step, trace_result):
-                        trace_type = 'loop'
+                        # Loop
+                        trace_step['in']['type'] = 'loop'
+                        do_trace = False
                     else:
                         trace_type = 'trace'
                 else:
@@ -213,6 +208,8 @@ class Main(KytosNApp):
         if switch.dpid not in stored_flows:
             return None
         response = []
+        if switch.dpid not in stored_flows:
+            return None
         try:
             for flow in stored_flows[switch.dpid]:
                 match = Main.do_match(flow, args)
@@ -237,11 +234,12 @@ class Main(KytosNApp):
         if a match flow is found, apply its actions."""
         flow = self.match_flows(switch, args, stored_flows, False)
         port = None
-        actions = None
+        actions = []
         # pylint: disable=too-many-nested-blocks
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
-        actions = flow['flow']['actions']
+        if 'actions' in flow['flow']:
+            actions = flow['flow']['actions']
         for action in actions:
             action_type = action['action_type']
             if action_type == 'output':

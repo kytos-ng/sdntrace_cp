@@ -16,9 +16,14 @@ paths:
               properties:
                 trace:
                   type: object
+                  required:
+                    - switch
                   properties:
                     switch:
                       type: object
+                      required:
+                        - dpid
+                        - in_port
                       properties:
                         dpid:
                           type: string
@@ -109,12 +114,19 @@ paths:
                           example: "2022-01-25 13:44:52.387021"
                         type:
                           type: string
-                          description: Type of the step. May be "starting" or "trace".
+                          description: Type of the step. May be "starting", "trace", "loop" or "incomplete".
                           example: "trace"
                         vlan:
                           type: integer
                           description: VLAN ID
                           example: 100
+        400:
+          description: "Parameter 'dpid' and/or 'in_port' is missing"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Bad request
   /api/amlight/sdntrace_cp/trace/{trace_id}:
     get:
       summary: Get the result of a trace
@@ -182,9 +194,14 @@ paths:
                 properties:
                   trace:
                     type: object
+                    required:
+                      - switch
                     properties:
                       switch:
                         type: object
+                        required:
+                          - dpid
+                          - in_port
                         properties:
                           dpid:
                             type: string
@@ -248,8 +265,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  switch:
-                    type: array
+                  result:
+                    type: array 
                     items:
                       type: array
                       items:
@@ -274,7 +291,7 @@ paths:
                             example: "2022-01-25 13:44:52.387021"
                           type:
                             type: string
-                            description: Type of the step. May be "starting" or "trace".
+                            description: Type of the step. May be "starting", "trace", "loop" or "incomplete".
                             example: "trace"
                           vlan:
                             type: integer

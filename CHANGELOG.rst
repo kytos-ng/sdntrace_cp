@@ -6,6 +6,22 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [UNRELEASED] - Under development
 ********************************
 
+Changed
+=======
+- Update ``tracepath`` to support two new trace types: `loop` and `incomplete`. The `incomplete`` type replaces the empty list that was returned as a response in some cases.
+
+Fixed
+=====
+- Check the ``actions`` field in flows when running Sdntrace to avoid KeyError.
+- In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
+
+[2022.3.1] - 2023-02-27
+***********************
+
+Changed
+=======
+- ``PUT /traces`` will return the results in order, without aggregating them by `dpid`. Also, failed traces are not omitted.
+
 [2022.3.0] - 2022-12-15
 ***********************
 
