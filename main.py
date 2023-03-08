@@ -119,7 +119,7 @@ class Main(KytosNApp):
                         trace_step['in']['type'] = 'loop'
                         do_trace = False
                     else:
-                        trace_type = 'trace'
+                        trace_type = 'intermediary'
                 else:
                     trace_step['in']['type'] = 'last'
                     do_trace = False

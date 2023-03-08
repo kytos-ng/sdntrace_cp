@@ -234,7 +234,7 @@ class TestMain(TestCase):
 
         assert result[1]["in"]["dpid"] == "00:00:00:00:00:00:00:02"
         assert result[1]["in"]["port"] == 2
-        assert result[1]["in"]["type"] == "trace"
+        assert result[1]["in"]["type"] == "intermediary"
         assert result[1]["out"]["port"] == 3
 
     def test_has_loop(self):
@@ -638,7 +638,6 @@ class TestMain(TestCase):
         )
         current_data = json.loads(response.data)
         result = current_data["result"]
-        print(result)
         assert len(result) == 2
         assert result[0][-1]['type'] == "incomplete"
         assert result[1][-1]['type'] == "incomplete"

@@ -114,8 +114,8 @@ paths:
                           example: "2022-01-25 13:44:52.387021"
                         type:
                           type: string
-                          description: Type of the step. May be "starting", "trace", "loop" or "incomplete".
-                          example: "trace"
+                          description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
+                          example: "intermediary"
                         vlan:
                           type: integer
                           description: VLAN ID
@@ -170,8 +170,8 @@ paths:
                           example: "2018-03-22 14:50:56.888483"
                         type:
                           type: string
-                          description: Type of this step. May be starting, trace, last or loop.
-                          example: trace
+                          description: Type of this step. May be starting, intermediary, last or loop.
+                          example: intermediary
                   start_time:
                     type: string
                     description: Start time of the trace
@@ -291,8 +291,8 @@ paths:
                             example: "2022-01-25 13:44:52.387021"
                           type:
                             type: string
-                            description: Type of the step. May be "starting", "trace", "loop" or "incomplete".
-                            example: "trace"
+                            description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
+                            example: "intermediary"
                           vlan:
                             type: integer
                             description: VLAN ID
