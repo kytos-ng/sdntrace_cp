@@ -135,6 +135,11 @@ class Main(KytosNApp):
     @staticmethod
     def has_loop(trace_step, trace_result):
         """Check if there is a loop in the trace result."""
+        # outgoing interface is the same as the input interface
+        if trace_result and \
+                trace_result[-1]['in']['dpid'] ==  \
+                trace_result[-1]['out']['port']:
+            return True
         for trace in trace_result:
             if trace['in']['dpid'] == trace_step['dpid'] and \
                             trace['in']['port'] == trace_step['port']:
