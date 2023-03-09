@@ -97,6 +97,8 @@ class Main(KytosNApp):
 
             switch = self.controller.get_switch_by_dpid(entries['dpid'])
             if not switch:
+                trace_step['in']['type'] = 'last'
+                trace_result.append(trace_step)
                 break
             result = self.trace_step(switch, entries, stored_flows)
             if result:
@@ -109,20 +111,21 @@ class Main(KytosNApp):
                 if 'dpid' in result:
                     next_step = {'dpid': result['dpid'],
                                  'port': result['in_port']}
+                    entries = result['entries']
+                    entries['dpid'] = result['dpid']
+                    entries['in_port'] = result['in_port']
                     if self.has_loop(next_step, trace_result):
                         # Loop
+                        trace_step['in']['type'] = 'loop'
                         do_trace = False
                     else:
-                        entries = result['entries']
-                        entries['dpid'] = result['dpid']
-                        entries['in_port'] = result['in_port']
-                        trace_type = 'trace'
+                        trace_type = 'intermediary'
                 else:
                     trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
-                # Incomplete
-                break
+                trace_step['in']['type'] = 'incomplete'
+                do_trace = False
             trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
@@ -202,6 +205,8 @@ class Main(KytosNApp):
                 first flow or not
         :return: If many, the list of matched flows, or the matched flow
         """
+        if switch.dpid not in stored_flows:
+            return None
         response = []
         if switch.dpid not in stored_flows:
             return None

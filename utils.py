@@ -34,8 +34,6 @@ def convert_entries(entries):
             new_entries[field] = value
     if 'dl_vlan' in new_entries:
         new_entries['dl_vlan'] = [new_entries['dl_vlan']]
-    if ('dpid' not in new_entries) or ('in_port' not in new_entries):
-        new_entries = {}
     return new_entries
 
 

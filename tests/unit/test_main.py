@@ -234,7 +234,7 @@ class TestMain(TestCase):
 
         assert result[1]["in"]["dpid"] == "00:00:00:00:00:00:00:02"
         assert result[1]["in"]["port"] == 2
-        assert result[1]["in"]["type"] == "trace"
+        assert result[1]["in"]["type"] == "intermediary"
         assert result[1]["out"]["port"] == 3
 
     def test_has_loop(self):
@@ -431,7 +431,8 @@ class TestMain(TestCase):
         response = api.put(
             url, data=json.dumps(payload), content_type="application/json"
         )
-        assert response.data == b"Bad request"
+        current_data = json.loads(response.data)
+        assert current_data["result"] == []
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_get_traces(self, mock_stored_flows):
@@ -485,29 +486,52 @@ class TestMain(TestCase):
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_traces(self, mock_stored_flows):
-        """Test traces rest call for two traces with different switches."""
+        """Test traces rest call"""
         api = get_test_client(get_controller_mock(), self.napp)
         url = f"{self.server_name_url}/traces/"
 
         payload = [
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:01",
-                        "in_port": 1
-                        },
-                    "eth": {"dl_vlan": 100},
-                }
-            },
-            {
-                "trace": {
-                    "switch": {
-                        "dpid": "00:00:00:00:00:00:00:02",
-                        "in_port": 1},
-                    "eth": {"dl_vlan": 100},
-                }
-            }
-        ]
+                    {
+                        "trace": {
+                            "switch": {
+                                "dpid": "00:00:00:00:00:00:00:01",
+                                "in_port": 1
+                            },
+                            "eth": {
+                                "dl_vlan": 100
+                            }
+                        }
+                    },
+                    {
+                        "trace": {
+                            "switch": {
+                                "dpid": "00:00:00:00:00:00:00:0a",
+                                "in_port": 1
+                            },
+                            "eth": {
+                                "dl_vlan": 100
+                            }
+                        }
+                    },
+                    {
+                        "trace": {
+                            "switch": {
+                                "dpid": "00:00:00:00:00:00:00:02",
+                            }
+                        }
+                    },
+                    {
+                        "trace": {
+                            "switch": {
+                                "dpid": "00:00:00:00:00:00:00:02",
+                                "in_port": 2
+                            },
+                            "eth": {
+                                "dl_vlan": 100
+                            }
+                        }
+                    }
+                ]
 
         stored_flow = {
             "id": 1,
@@ -532,8 +556,7 @@ class TestMain(TestCase):
         )
         current_data = json.loads(response.data)
         result = current_data["result"]
-
-        assert len(result) == 2
+        assert len(result) == 4
 
         assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
         assert result[0][0]["port"] == 1
@@ -541,11 +564,19 @@ class TestMain(TestCase):
         assert result[0][0]["vlan"] == 100
         assert result[0][0]["out"] == {"port": 2, "vlan": 100}
 
-        assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:02"
+        assert result[1][0]["dpid"] == "00:00:00:00:00:00:00:0a"
         assert result[1][0]["port"] == 1
         assert result[1][0]["type"] == "last"
         assert result[1][0]["vlan"] == 100
-        assert result[1][0]["out"] == {"port": 2, "vlan": 100}
+        assert result[1][0]["out"] is None
+
+        assert result[2] == []
+
+        assert result[3][0]["dpid"] == "00:00:00:00:00:00:00:02"
+        assert result[3][0]["port"] == 2
+        assert result[3][0]["type"] == "incomplete"
+        assert result[3][0]["vlan"] == 100
+        assert result[3][0]["out"] is None
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_traces_no_action(self, mock_stored_flows):
@@ -608,6 +639,5 @@ class TestMain(TestCase):
         current_data = json.loads(response.data)
         result = current_data["result"]
         assert len(result) == 2
-
-        assert result[0] == []
-        assert result[1] == []
+        assert result[0][-1]['type'] == "incomplete"
+        assert result[1][-1]['type'] == "incomplete"
