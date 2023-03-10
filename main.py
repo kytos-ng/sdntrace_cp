@@ -108,10 +108,6 @@ class Main(KytosNApp):
                 trace_step.update({
                     'out': out
                 })
-                if out and self.trace_step_has_loop(trace_step, trace_result):
-                    trace_step['in']['type'] = 'loop'
-                    trace_result.append(trace_step)
-                    break
                 if 'dpid' in result:
                     next_step = {'dpid': result['dpid'],
                                  'port': result['in_port']}
@@ -129,23 +125,29 @@ class Main(KytosNApp):
             else:
                 trace_step['in']['type'] = 'incomplete'
                 do_trace = False
-            trace_result.append(trace_step)
+            trace_result = self.add_trace_step(trace_step, trace_result)
         self.traces.update({
             trace_id: trace_result
         })
         return trace_result
 
     @staticmethod
-    def trace_step_has_loop(trace, trace_result):
-        """Check if there is a loop in the trace result."""
+    def add_trace_step(trace_step, trace_result):
+        """Check if there is a loop in the trace and add the step."""
         # outgoing interface is the same as the input interface
-        if not trace_result and trace['in']['port'] == trace['out']['port']:
-            return True
+        if 'out' not in trace_step or not trace_step['out']:
+            trace_result.append(trace_step)
+            return trace_result
+        if not trace_result and \
+                trace_step['in']['type'] == 'last' and \
+                trace_step['in']['port'] == trace_step['out']['port']:
+            trace_step['in']['type'] = 'loop'
         if trace_result and \
-                trace_result[0]['in']['dpid'] == trace['in']['dpid'] and \
-                trace_result[0]['in']['port'] == trace['out']['port']:
-            return True
-        return False
+                trace_result[0]['in']['dpid'] == trace_step['in']['dpid'] and \
+                trace_result[0]['in']['port'] == trace_step['out']['port']:
+            trace_step['in']['type'] = 'loop'
+        trace_result.append(trace_step)
+        return trace_result
 
     @staticmethod
     def has_loop(trace_step, trace_result):
