@@ -237,6 +237,29 @@ class TestMain(TestCase):
         assert result[1]["in"]["type"] == "intermediary"
         assert result[1]["out"]["port"] == 3
 
+    @patch("napps.amlight.sdntrace_cp.main.Main.trace_step")
+    def test_tracepath_loop(self, mock_trace_step):
+        """Test tracepath with success result."""
+        eth = {"dl_vlan": 100}
+        dpid = {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1}
+        switch = {"switch": dpid, "eth": eth}
+        entries = {"trace": switch}
+        mock_trace_step.return_value = {
+            "dpid": "00:00:00:00:00:00:00:01",
+            "in_port": 1,
+            "out_port": 1,
+            "entries": entries,
+        }
+
+        result = self.napp.tracepath(
+                                        entries["trace"]["switch"],
+                                        {}
+                                    )
+        assert len(result) == 2
+        # input interface = output interface
+        assert result[0]["in"]["type"] == "starting"
+        assert result[1]["in"]["type"] == "loop"
+
     def test_has_loop(self):
         """Test has_loop to detect a tracepath with loop."""
         trace_result = [

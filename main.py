@@ -80,6 +80,7 @@ class Main(KytosNApp):
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
+        # pylint: disable=too-many-branches
         self.last_id += 1
         trace_id = self.last_id
         trace_result = []
@@ -125,29 +126,30 @@ class Main(KytosNApp):
             else:
                 trace_step['in']['type'] = 'incomplete'
                 do_trace = False
-            trace_result = self.add_trace_step(trace_step, trace_result)
+            if 'out' in trace_step and trace_step['out']:
+                if self.check_loop_trace_step(trace_step, trace_result):
+                    do_trace = False
+            trace_result.append(trace_step)
         self.traces.update({
             trace_id: trace_result
         })
         return trace_result
 
     @staticmethod
-    def add_trace_step(trace_step, trace_result):
+    def check_loop_trace_step(trace_step, trace_result):
         """Check if there is a loop in the trace and add the step."""
         # outgoing interface is the same as the input interface
-        if 'out' not in trace_step or not trace_step['out']:
-            trace_result.append(trace_step)
-            return trace_result
         if not trace_result and \
                 trace_step['in']['type'] == 'last' and \
                 trace_step['in']['port'] == trace_step['out']['port']:
             trace_step['in']['type'] = 'loop'
+            return True
         if trace_result and \
                 trace_result[0]['in']['dpid'] == trace_step['in']['dpid'] and \
                 trace_result[0]['in']['port'] == trace_step['out']['port']:
             trace_step['in']['type'] = 'loop'
-        trace_result.append(trace_step)
-        return trace_result
+            return True
+        return False
 
     @staticmethod
     def has_loop(trace_step, trace_result):
