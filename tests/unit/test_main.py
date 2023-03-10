@@ -612,7 +612,7 @@ class TestMain(TestCase):
         }
 
         mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [stored_flow]
+            "00:00:00:00:00:00:00:01": [stored_flow],
         }
 
         response = api.put(

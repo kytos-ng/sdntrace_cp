@@ -108,7 +108,7 @@ class Main(KytosNApp):
                 trace_step.update({
                     'out': out
                 })
-                if self.trace_step_has_loop(trace_step):
+                if out and self.trace_step_has_loop(trace_step, trace_result):
                     trace_step['in']['type'] = 'loop'
                     trace_result.append(trace_step)
                     break
@@ -136,10 +136,14 @@ class Main(KytosNApp):
         return trace_result
 
     @staticmethod
-    def trace_step_has_loop(trace):
+    def trace_step_has_loop(trace, trace_result):
         """Check if there is a loop in the trace result."""
         # outgoing interface is the same as the input interface
-        if trace['in']['port'] == trace['out']['port']:
+        if not trace_result and trace['in']['port'] == trace['out']['port']:
+            return True
+        if trace_result and \
+                trace_result[0]['in']['dpid'] == trace['in']['dpid'] and \
+                trace_result[0]['in']['port'] == trace['out']['port']:
             return True
         return False
 
