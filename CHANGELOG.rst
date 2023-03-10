@@ -9,6 +9,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Changed
 =======
 - Update ``tracepath`` to support two new trace types: `loop` and `incomplete`. The `trace` type is now `intermediary`. The `incomplete`` type replaces the empty list that was returned as a response in some cases.
+- Add new case of `loop` when the outgoing interface is the same as the input interface.
 
 Fixed
 =====
