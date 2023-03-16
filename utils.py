@@ -159,3 +159,12 @@ def _compare_endpoints(endpoint1, endpoint2):
     elif 'out_vlan' in endpoint1 or 'in_vlan' in endpoint2:
         return False
     return True
+
+
+def map_dl_vlan(vlan_value):
+    """Return 4096/4096 and 0 respectively in case of any and untagged"""
+    special = {"any": "4096/4096", "untagged": 0}
+
+    if isinstance(vlan_value, str):
+        return special.get(vlan_value, vlan_value)
+    return vlan_value

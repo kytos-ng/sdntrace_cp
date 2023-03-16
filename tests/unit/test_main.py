@@ -713,3 +713,67 @@ class TestMain(TestCase):
         assert len(result) == 2
         assert result[0][-1]['type'] == "incomplete"
         assert result[1][-1]['type'] == "incomplete"
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    def test_get_traces_str_vlan(self, mock_stored_flows):
+        """Test traces rest call."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": "untagged"},
+            }
+        }]
+
+        stored_flow = {
+            "id": 1,
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+                "match": {"dl_vlan": 0, "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 2},
+                ],
+            }
+        }
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flow]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0][0]["port"] == 1
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["vlan"] == "untagged"
+        assert result[0][0]["out"] == {"port": 2}
+
+        payload[0]['trace']['eth']['dl_vlan'] = 'any'
+        stored_flow['flow']['match']['dl_vlan'] = '4096/4096'
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flow]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0][0]["port"] == 1
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["vlan"] == "any"
+        assert result[0][0]["out"] == {"port": 2}
