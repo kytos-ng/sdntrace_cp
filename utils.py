@@ -161,10 +161,12 @@ def _compare_endpoints(endpoint1, endpoint2):
     return True
 
 
-def map_dl_vlan(vlan_value):
-    """Return 4096/4096 and 0 respectively in case of any and untagged"""
+def match_field_dl_vlan(vlan_value, field_flow):
+    """Verify match in dl_vlan"""
     special = {"any": "4096/4096", "untagged": 0}
-
-    if isinstance(vlan_value, str):
-        return special.get(vlan_value, vlan_value)
-    return vlan_value
+    if vlan_value in special:
+        vlan_value = special.get(vlan_value, vlan_value)
+    if isinstance(vlan_value, int):
+        return vlan_value == field_flow
+    value, mask = map(int, vlan_value.split('/'))
+    return value & (mask & 4095) == field_flow & (mask & 4095)

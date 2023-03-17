@@ -37,14 +37,8 @@ paths:
                       type: object
                       properties:
                         dl_vlan:
-                          description: VLAN ID
-                          oneOf:
-                            - type: integer
-                              format: int32
-                            - type: string
-                              enum:
-                                - any
-                                - untagged                          
+                          type: integer
+                          description: VLAN ID                         
                           example: 100
                         dl_type:
                           type: string
@@ -123,15 +117,9 @@ paths:
                           description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
                           example: "intermediary"
                         vlan:
+                          type: integer
                           description: VLAN ID
                           example: 100
-                          oneOf:
-                            - type: integer
-                              format: int32
-                            - type: string
-                              enum:
-                                - any
-                                - untagged  
         400:
           description: "Parameter 'dpid' and/or 'in_port' is missing"
           content:
@@ -227,14 +215,8 @@ paths:
                         type: object
                         properties:
                           dl_vlan:
-                            description: VLAN ID
-                            oneOf:
-                              - type: integer
-                                format: int32
-                              - type: string
-                                enum:
-                                  - any
-                                  - untagged                          
+                            type: integer
+                            description: VLAN ID                        
                             example: 100
                           dl_type:
                             type: string
@@ -312,12 +294,7 @@ paths:
                             description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
                             example: "intermediary"
                           vlan:
+                            type: integer
                             description: VLAN ID
                             example: 100
-                            oneOf:
-                              - type: integer
-                                format: int32
-                              - type: string
-                                enum:
-                                  - any
-                                  - untagged  
+

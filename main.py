@@ -13,7 +13,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             map_dl_vlan, prepare_json)
+                                             match_field_dl_vlan, prepare_json)
 
 
 class Main(KytosNApp):
@@ -76,7 +76,8 @@ class Main(KytosNApp):
         results = []
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
-        return jsonify(prepare_json(results))
+        temp = prepare_json(results)
+        return jsonify(temp)
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
@@ -201,9 +202,10 @@ class Main(KytosNApp):
                 return False
             if name == 'dl_vlan':
                 field = args[name][-1]
-                field = map_dl_vlan(field)
-            else:
-                field = args[name]
+                if not match_field_dl_vlan(field, field_flow):
+                    return False
+                continue
+            field = args[name]
             if name not in ('ipv4_src', 'ipv4_dst', 'ipv6_src', 'ipv6_dst'):
                 if field_flow != field:
                     return False
