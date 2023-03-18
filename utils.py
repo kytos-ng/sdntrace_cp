@@ -161,11 +161,22 @@ def _compare_endpoints(endpoint1, endpoint2):
     return True
 
 
+def convert_vlan(value):
+    """Auxiliar function to calculate dl_vlan"""
+    special = {"any": "4096/4096", "untagged": 0}
+    value = special.get(value, value)
+    if isinstance(value, int):
+        return value, -1
+    value, mask = map(int, value.split('/'))
+    return value & (mask & 4095), mask
+
+
 def match_field_dl_vlan(vlan_value, field_flow):
     """Verify match in dl_vlan"""
-    special = {"any": "4096/4096", "untagged": 0}
-    vlan_value = special.get(vlan_value, vlan_value)
-    if isinstance(vlan_value, int):
-        return vlan_value == field_flow
-    value, mask = map(int, vlan_value.split('/'))
-    return value & (mask & 4095) == field_flow & (mask & 4095)
+    value, mask = convert_vlan(vlan_value)
+    value_flow, mask_flow = convert_vlan(field_flow)
+    if mask == -1 and mask_flow != -1:
+        return value & (mask_flow & 4095) == value_flow
+    if mask != -1 and mask_flow == -1:
+        return value == value_flow & (mask & 4095)
+    return value == value_flow

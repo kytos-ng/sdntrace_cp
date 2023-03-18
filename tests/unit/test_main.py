@@ -866,15 +866,34 @@ class TestMain(TestCase):
                 "hard_timeout": 0,
                 "idle_timeout": 0,
                 "priority": 100,
-                "match": {"dl_vlan": 10, "in_port": 1},
+                "match": {"dl_vlan": "4096/4096", "in_port": 1},
                 "actions": [
                     {"action_type": "pop_vlan"},
                     {"action_type": "output", "port": 3},
                 ],
             }
         }
+        stored_flow3 = {
+            "id": 1,
+            "flow": {
+                "table_id": 0,
+                "cookie": 84114964,
+                "hard_timeout": 0,
+                "idle_timeout": 0,
+                "priority": 10,
+                "match": {"dl_vlan": 10, "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 1},
+                ],
+            }
+        }
         mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [stored_flow1, stored_flow2]
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow2,
+                stored_flow3
+            ]
         }
 
         response = api.put(

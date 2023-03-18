@@ -38,7 +38,7 @@ paths:
                       properties:
                         dl_vlan:
                           type: integer
-                          description: VLAN ID                         
+                          description: VLAN ID
                           example: 100
                         dl_type:
                           type: string
@@ -216,7 +216,7 @@ paths:
                         properties:
                           dl_vlan:
                             type: integer
-                            description: VLAN ID                        
+                            description: VLAN ID
                             example: 100
                           dl_type:
                             type: string
