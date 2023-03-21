@@ -726,14 +726,6 @@ class TestMain(TestCase):
                     "dpid": "00:00:00:00:00:00:00:01",
                     "in_port": 1
                     },
-                "eth": {"dl_vlan": "untagged"},
-            }
-        }, {
-            "trace": {
-                "switch": {
-                    "dpid": "00:00:00:00:00:00:00:01",
-                    "in_port": 1
-                    },
                 "eth": {"dl_vlan": 0},
             }
         }, {
@@ -798,25 +790,7 @@ class TestMain(TestCase):
         assert result[1][0]["type"] == "last"
         assert result[1][0]["out"] == {"port": 2}
         assert result[2][0]["type"] == "last"
-        assert result[2][0]["out"] == {"port": 3}
-        assert result[3][0]["type"] == "last"
-        assert result[3][0]["out"] == {"port": 3}
-
-        stored_flow["flow"]["match"] = {"dl_vlan": 10, "in_port": 1}
-        mock_stored_flows.return_value = {
-            "00:00:00:00:00:00:00:01": [stored_flow]
-        }
-
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
-        result = current_data["result"]
-        assert result[0][0]["type"] == "incomplete"
-        assert result[1][0]["type"] == "incomplete"
-        assert result[2][0]["type"] == "incomplete"
-        assert result[3][0]["type"] == "last"
-        assert result[3][0]["out"] == {"port": 2}
+        assert result[2][0]["out"] == {"port": 2}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_get_traces_any(self, mock_stored_flows):
@@ -830,7 +804,7 @@ class TestMain(TestCase):
                     "dpid": "00:00:00:00:00:00:00:01",
                     "in_port": 1
                     },
-                "eth": {"dl_vlan": "any"}
+                "eth": {"dl_vlan": 10}
             }
         }, {
             "trace": {
@@ -838,7 +812,14 @@ class TestMain(TestCase):
                     "dpid": "00:00:00:00:00:00:00:01",
                     "in_port": 1
                     },
-                "eth": {"dl_vlan": 10}
+                "eth": {"dl_vlan": 0}
+            }
+        }, {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    }
             }
         }
         ]
@@ -851,7 +832,7 @@ class TestMain(TestCase):
                 "hard_timeout": 0,
                 "idle_timeout": 0,
                 "priority": 1000,
-                "match": {"dl_vlan": 100, "in_port": 1},
+                "match": {"dl_vlan": "4096/4096", "in_port": 1},
                 "actions": [
                     {"action_type": "pop_vlan"},
                     {"action_type": "output", "port": 2},
@@ -866,7 +847,7 @@ class TestMain(TestCase):
                 "hard_timeout": 0,
                 "idle_timeout": 0,
                 "priority": 100,
-                "match": {"dl_vlan": "4096/4096", "in_port": 1},
+                "match": {"dl_vlan": 10, "in_port": 1},
                 "actions": [
                     {"action_type": "pop_vlan"},
                     {"action_type": "output", "port": 3},
@@ -881,7 +862,7 @@ class TestMain(TestCase):
                 "hard_timeout": 0,
                 "idle_timeout": 0,
                 "priority": 10,
-                "match": {"dl_vlan": 10, "in_port": 1},
+                "match": {"in_port": 1},
                 "actions": [
                     {"action_type": "pop_vlan"},
                     {"action_type": "output", "port": 1},
@@ -904,4 +885,47 @@ class TestMain(TestCase):
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 2}
         assert result[1][0]["type"] == "last"
+        assert result[1][0]["out"] == {"port": 2}
+        assert result[1][0]["type"] == "last"
+        assert result[1][0]["out"] == {"port": 2}
+
+        stored_flow2['flow']['priority'] = 2000
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow2,
+                stored_flow1,
+                stored_flow3
+            ]
+        }
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["out"] == {"port": 3}
+        assert result[1][0]["type"] == "last"
         assert result[1][0]["out"] == {"port": 3}
+        assert result[1][0]["type"] == "last"
+        assert result[1][0]["out"] == {"port": 3}
+
+        stored_flow3['flow']['priority'] = 3000
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow3,
+                stored_flow1,
+                stored_flow2
+            ]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "loop"
+        assert result[0][0]["out"] == {"port": 1}
+        assert result[1][0]["type"] == "loop"
+        assert result[1][0]["out"] == {"port": 1}
+        assert result[1][0]["type"] == "loop"
+        assert result[1][0]["out"] == {"port": 1}
