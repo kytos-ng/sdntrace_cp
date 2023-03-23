@@ -169,13 +169,9 @@ def convert_vlan(value):
     return value, mask
 
 
-def match_field_dl_vlan(vlan_value, field_flow):
-    """Verify match in dl_vlan"""
-    value, mask = convert_vlan(vlan_value)
-    vlan = value & (mask & 4095)
+def match_field_dl_vlan(value, field_flow):
+    """Verify match in dl_vlan.
+    vlan only takes integer values in range [1,4095].
+    0 is not allowed for vlan, just the untagged case."""
     value_flow, mask_flow = convert_vlan(field_flow)
-    vlan_flow = value_flow & (mask_flow & 4095)
-    # untagged cases
-    if vlan == 0 or vlan_flow == 0:
-        return True
-    return vlan == vlan_flow
+    return value & (mask_flow & 4095) == value_flow & (mask_flow & 4095)

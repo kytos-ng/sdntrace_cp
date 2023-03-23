@@ -194,14 +194,19 @@ class Main(KytosNApp):
     def do_match(cls, flow, args):
         """Match a packet against this flow (OF1.3)."""
         # pylint: disable=consider-using-dict-items
+        # pylint: disable=too-many-return-statements
         if ('match' not in flow['flow']) or (len(flow['flow']['match']) == 0):
             return False
         for name in flow['flow']['match']:
             field_flow = flow['flow']['match'][name]
             if name == 'dl_vlan':
-                field = args[name][-1] if name in args else 0
-                if not match_field_dl_vlan(field, field_flow):
-                    return False
+                if name not in args:
+                    if field_flow != 0:
+                        return False
+                else:
+                    field = args[name][-1]
+                    if not match_field_dl_vlan(field, field_flow):
+                        return False
                 continue
             if name not in args:
                 return False
