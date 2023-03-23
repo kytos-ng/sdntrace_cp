@@ -427,6 +427,33 @@ class TestUtils(TestCase):
         result = utils.find_endpoint(mock_switch, port)
         self.assertIsNone(result)
 
+    def test_convert_vlan(self):
+        """Test convert_vlan function"""
+        value = 100
+        result = utils.convert_vlan(value)
+        assert result[0] == 100
+
+        value = "4096/4096"
+        result = utils.convert_vlan(value)
+        assert result[0] == 4096
+        assert result[1] == 4096
+
+    def test_match_field_dl_vlan(self):
+        """Test match_field_dl_vlan"""
+
+        result = utils.match_field_dl_vlan(None, 0)
+        self.assertTrue(result)
+        result = utils.match_field_dl_vlan(None, 10)
+        self.assertFalse(result)
+        result = utils.match_field_dl_vlan(None, "4096/4096")
+        self.assertFalse(result)
+        result = utils.match_field_dl_vlan(10, 0)
+        self.assertFalse(result)
+        result = utils.match_field_dl_vlan(10, 10)
+        self.assertTrue(result)
+        result = utils.match_field_dl_vlan(10, "4096/4096")
+        self.assertTrue(result)
+
 
 # pylint: disable=too-many-public-methods, too-many-lines
 class TestUtilsWithController(TestCase):

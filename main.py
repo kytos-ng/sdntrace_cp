@@ -200,13 +200,11 @@ class Main(KytosNApp):
         for name in flow['flow']['match']:
             field_flow = flow['flow']['match'][name]
             if name == 'dl_vlan':
-                if name not in args:
-                    if field_flow != 0:
-                        return False
-                else:
-                    field = args[name][-1]
-                    if not match_field_dl_vlan(field, field_flow):
-                        return False
+                field = args.get(name)
+                if field:
+                    field = field[-1]
+                if not match_field_dl_vlan(field, field_flow):
+                    return False
                 continue
             if name not in args:
                 return False
