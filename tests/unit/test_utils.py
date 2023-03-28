@@ -453,6 +453,12 @@ class TestUtils(TestCase):
         self.assertTrue(result)
         result = utils.match_field_dl_vlan(10, "4096/4096")
         self.assertTrue(result)
+        result = utils.match_field_dl_vlan(10, 11)
+        self.assertFalse(result)
+        result = utils.match_field_dl_vlan(3, "5/1")
+        self.assertTrue(result)
+        result = utils.match_field_dl_vlan(2, "5/1")
+        self.assertFalse(result)
 
 
 # pylint: disable=too-many-public-methods, too-many-lines
