@@ -13,7 +13,7 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             prepare_json)
+                                             match_field_dl_vlan, prepare_json)
 
 
 class Main(KytosNApp):
@@ -76,7 +76,8 @@ class Main(KytosNApp):
         results = []
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
-        return jsonify(prepare_json(results))
+        temp = prepare_json(results)
+        return jsonify(temp)
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
@@ -193,16 +194,21 @@ class Main(KytosNApp):
     def do_match(cls, flow, args):
         """Match a packet against this flow (OF1.3)."""
         # pylint: disable=consider-using-dict-items
+        # pylint: disable=too-many-return-statements
         if ('match' not in flow['flow']) or (len(flow['flow']['match']) == 0):
             return False
         for name in flow['flow']['match']:
             field_flow = flow['flow']['match'][name]
+            if name == 'dl_vlan':
+                field = args.get(name)
+                if field:
+                    field = field[-1]
+                if not match_field_dl_vlan(field, field_flow):
+                    return False
+                continue
             if name not in args:
                 return False
-            if name == 'dl_vlan':
-                field = args[name][-1]
-            else:
-                field = args[name]
+            field = args[name]
             if name not in ('ipv4_src', 'ipv4_dst', 'ipv6_src', 'ipv6_dst'):
                 if field_flow != field:
                     return False

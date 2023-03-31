@@ -713,3 +713,188 @@ class TestMain(TestCase):
         assert len(result) == 2
         assert result[0][-1]['type'] == "incomplete"
         assert result[1][-1]['type'] == "incomplete"
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    def test_get_traces_untagged(self, mock_stored_flows):
+        """Test traces rest call."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": 10},
+            }
+        }, {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    }
+            }
+        }
+        ]
+
+        stored_flow1 = {
+            "flow": {
+                "match": {"dl_vlan": 0, "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 2},
+                ],
+            }
+        }
+        stored_flow2 = {
+            "flow": {
+                "match": {"in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 3},
+                ],
+            }
+        }
+        stored_flow3 = {
+            "flow": {
+                "match": {"dl_vlan": 10, "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 1},
+                ],
+            }
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow2,
+                stored_flow3
+            ]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["out"] == {"port": 3}
+        assert result[1][0]["type"] == "last"
+        assert result[1][0]["out"] == {"port": 2}
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow3,
+                stored_flow2,
+                stored_flow1
+            ]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "loop"
+        assert result[0][0]["out"] == {"port": 1}
+        assert result[1][0]["type"] == "last"
+        assert result[1][0]["out"] == {"port": 3}
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    def test_get_traces_any(self, mock_stored_flows):
+        """Test traces rest call."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": 10}
+            }
+        }, {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    }
+            }
+        }
+        ]
+
+        stored_flow1 = {
+            "flow": {
+                "match": {"dl_vlan": "4096/4096", "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 2},
+                ],
+            }
+        }
+        stored_flow2 = {
+            "flow": {
+                "match": {"dl_vlan": 10, "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 1},
+                ],
+            }
+        }
+        stored_flow3 = {
+            "flow": {
+                "match": {"dl_vlan": "10/10", "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 3},
+                ],
+            }
+        }
+        stored_flow4 = {
+            "flow": {
+                "match": {"dl_vlan": "20/10", "in_port": 1},
+                "actions": [
+                    {"action_type": "pop_vlan"},
+                    {"action_type": "output", "port": 1},
+                ],
+            }
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow2,
+                stored_flow3,
+                stored_flow4
+            ]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["out"] == {"port": 2}
+        assert result[1][0]["type"] == "incomplete"
+        assert result[1][0]["out"] is None
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow4,
+                stored_flow3,
+                stored_flow2,
+                stored_flow1
+            ]
+        }
+
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        current_data = json.loads(response.data)
+        result = current_data["result"]
+        assert result[0][0]["type"] == "last"
+        assert result[0][0]["out"] == {"port": 3}
+        assert result[1][0]["type"] == "incomplete"
+        assert result[1][0]["out"] is None

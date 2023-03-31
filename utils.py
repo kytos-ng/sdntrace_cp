@@ -159,3 +159,21 @@ def _compare_endpoints(endpoint1, endpoint2):
     elif 'out_vlan' in endpoint1 or 'in_vlan' in endpoint2:
         return False
     return True
+
+
+def convert_vlan(value):
+    """Auxiliar function to calculate dl_vlan"""
+    if isinstance(value, int):
+        return value, 4095
+    value, mask = map(int, value.split('/'))
+    return value, mask
+
+
+def match_field_dl_vlan(value, field_flow):
+    """ Verify match in dl_vlan.
+    value only takes an int in range [1,4095].
+    0 is not allowed for value. """
+    if not value:
+        return field_flow == 0
+    value_flow, mask_flow = convert_vlan(field_flow)
+    return value & (mask_flow & 4095) == value_flow & (mask_flow & 4095)
