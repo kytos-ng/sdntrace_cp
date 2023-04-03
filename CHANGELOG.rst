@@ -9,6 +9,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Added
 =====
 - Support "untagged" and "any" on EVCs.
+- `PUT /trace and /traces` endpoints validate payload with ``@validate_openapi`` from kytos.core.
 
 Changed
 =======
