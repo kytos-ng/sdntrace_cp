@@ -4,10 +4,12 @@ Run tracepaths on OpenFlow in the Control Plane
 """
 
 import ipaddress
+import pathlib
 from datetime import datetime
 
-from flask import jsonify, request
+from flask import jsonify
 from kytos.core import KytosNApp, log, rest
+from kytos.core.helpers import load_spec, validate_openapi
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
@@ -22,6 +24,8 @@ class Main(KytosNApp):
     This application gets the list of flows from the switches
     and uses it to trace paths without using the data plane.
     """
+
+    spec = load_spec(pathlib.Path(__file__).parent / "openapi.yml")
 
     def setup(self):
         """Replace the '__init__' method for the KytosNApp subclass.
@@ -56,11 +60,11 @@ class Main(KytosNApp):
         self.automate.sheduler_shutdown(wait=False)
 
     @rest('/trace', methods=['PUT'])
-    def trace(self):
+    @validate_openapi(spec)
+    def trace(self, data):
         """Trace a path."""
         result = []
-        entries = request.get_json()
-        entries = convert_entries(entries)
+        entries = convert_entries(data)
         if not entries:
             return "Bad request", 400
         stored_flows = get_stored_flows()
@@ -68,10 +72,10 @@ class Main(KytosNApp):
         return jsonify(prepare_json(result))
 
     @rest('/traces', methods=['PUT'])
-    def get_traces(self):
+    @validate_openapi(spec)
+    def get_traces(self, data):
         """For bulk requests."""
-        entries = request.get_json()
-        entries = convert_list_entries(entries)
+        entries = convert_list_entries(data)
         stored_flows = get_stored_flows()
         results = []
         for entry in entries:

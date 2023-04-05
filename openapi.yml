@@ -40,8 +40,10 @@ paths:
                           type: integer
                           description: VLAN ID. This is an integer in range [1, 4095] as in a network packet.
                           example: 100
+                          minimum: 1
+                          maximum: 4095
                         dl_type:
-                          type: string
+                          type: integer
                           description: Ethernet type
                           example: '0x8100'
                         dl_src:
@@ -218,8 +220,10 @@ paths:
                             type: integer
                             description: VLAN ID. This is an integer in range [1, 4095] as in a network packet.
                             example: 100
+                            minimum: 1
+                            maximum: 4095
                           dl_type:
-                            type: string
+                            type: integer
                             description: Ethernet type
                           dl_src:
                             type: string
