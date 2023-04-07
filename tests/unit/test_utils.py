@@ -394,9 +394,9 @@ class TestUtils(TestCase):
 
         mock_switch = MagicMock()
         mock_switch.get_interface_by_port_no.return_value = mock_interface
-
+        expected = {'endpoint': mock_interface.link.endpoint_a}
         result = utils.find_endpoint(mock_switch, port)
-        self.assertEqual(result, mock_interface.link.endpoint_a)
+        self.assertEqual(result, expected)
 
     def test_find_endpoint_a(self):
         """Test find endpoint with interface equals link endpoint A."""
@@ -410,9 +410,9 @@ class TestUtils(TestCase):
 
         mock_switch = MagicMock()
         mock_switch.get_interface_by_port_no.return_value = mock_interface
-
+        expected = {'endpoint': mock_interface.link.endpoint_b}
         result = utils.find_endpoint(mock_switch, port)
-        self.assertEqual(result, mock_interface.link.endpoint_b)
+        self.assertEqual(result, expected)
 
     def test_find_endpoint_link_none(self):
         """Test find endpoint without link."""
@@ -425,7 +425,8 @@ class TestUtils(TestCase):
         mock_switch.get_interface_by_port_no.return_value = mock_interface
 
         result = utils.find_endpoint(mock_switch, port)
-        self.assertIsNone(result)
+        assert 'endpoint' in result
+        self.assertIsNone(result['endpoint'])
 
     def test_convert_vlan(self):
         """Test convert_vlan function"""
