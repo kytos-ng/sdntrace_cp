@@ -22,6 +22,7 @@ Fixed
 =====
 - Check the ``actions`` field in flows when running Sdntrace to avoid KeyError.
 - In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
+- Check that an interface has been found with ``find_endpoint`` given ``switch`` and ``port`` at each ``trace_step``.
 
 [2022.3.1] - 2023-02-27
 ***********************

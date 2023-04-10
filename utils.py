@@ -56,11 +56,13 @@ def find_endpoint(switch, port):
     returns the interface it is connected to, otherwise returns None """
 
     interface = switch.get_interface_by_port_no(port)
-    if interface.link:
+    if not interface:
+        return None
+    if interface and interface.link:
         if interface == interface.link.endpoint_a:
-            return interface.link.endpoint_b
-        return interface.link.endpoint_a
-    return None
+            return {'endpoint': interface.link.endpoint_b}
+        return {'endpoint': interface.link.endpoint_a}
+    return {'endpoint': None}
 
 
 def _prepare_json(trace_result):
