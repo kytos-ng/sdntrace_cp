@@ -36,8 +36,6 @@ class Main(KytosNApp):
         """
         log.info("Starting Kytos SDNTrace CP App!")
 
-        self.traces = {}
-        self.last_id = 30000
         self.automate = Automate(self)
         self.automate.schedule_traces()
         self.automate.schedule_important_traces()
@@ -86,8 +84,6 @@ class Main(KytosNApp):
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
         # pylint: disable=too-many-branches
-        self.last_id += 1
-        trace_id = self.last_id
         trace_result = []
         trace_type = 'starting'
         do_trace = True
@@ -135,9 +131,6 @@ class Main(KytosNApp):
                 if self.check_loop_trace_step(trace_step, trace_result):
                     do_trace = False
             trace_result.append(trace_step)
-        self.traces.update({
-            trace_id: trace_result
-        })
         return trace_result
 
     @staticmethod
