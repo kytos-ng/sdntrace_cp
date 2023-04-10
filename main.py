@@ -180,7 +180,7 @@ class Main(KytosNApp):
 
         endpoint = find_endpoint(switch, port)
         if endpoint is None:
-            log.warning("Interface not found")
+            log.warning(f"Port {port} not found on switch {switch}")
             return None
         endpoint = endpoint['endpoint']
         if endpoint is None:
