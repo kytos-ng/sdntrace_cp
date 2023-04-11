@@ -10,6 +10,7 @@ Added
 =====
 - Support "untagged" and "any" on EVCs.
 - `PUT /trace and /traces` endpoints validate payload with ``@validate_openapi`` from kytos.core.
+- Add ``v1`` on API routes. 
 
 Changed
 =======

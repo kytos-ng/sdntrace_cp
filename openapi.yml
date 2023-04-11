@@ -4,7 +4,7 @@ info:
   version: '0.1'
   description: An OpenFlow Path Tracing on Control Plane
 paths:
-  /api/amlight/sdntrace_cp/trace:
+  /api/amlight/sdntrace_cp/v1/trace:
     put:
       summary: Trace a path
       description: Trace a path starting with the switch given with the parameters given. The trace is done entirely in control plane.
@@ -130,7 +130,7 @@ paths:
               schema:
                 type: string
                 example: Bad request
-  /api/amlight/sdntrace_cp/traces:
+  /api/amlight/sdntrace_cp/v1/traces:
     put:
       summary: Trace paths given switches
       description: Trace a path starting with each switch given in a list as parameter.
