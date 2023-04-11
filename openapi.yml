@@ -116,7 +116,8 @@ paths:
                           example: "2022-01-25 13:44:52.387021"
                         type:
                           type: string
-                          description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
+                          enum: ["starting", "intermediary", "last", "loop", "incomplete"]
+                          description: Type of the step. May be "starting", "intermediary", "last", and "loop" or "incomplete" for failure.
                           example: "intermediary"
                         vlan:
                           type: integer
@@ -242,7 +243,8 @@ paths:
                             example: "2022-01-25 13:44:52.387021"
                           type:
                             type: string
-                            description: Type of the step. May be "starting", "intermediary", "loop" or "incomplete".
+                            enum: ["starting", "intermediary", "last", "loop", "incomplete"]
+                            description: Type of the step. May be "starting", "intermediary", "last", and "loop" or "incomplete" for failure.
                             example: "intermediary"
                           vlan:
                             type: integer
