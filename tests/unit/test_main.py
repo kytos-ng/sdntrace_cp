@@ -22,7 +22,8 @@ class TestMain(TestCase):
 
         Set the server_name_url_url from amlight/sdntrace_cp
         """
-        self.server_name_url = "http://localhost:8181/api/amlight/sdntrace_cp"
+        self.server_name_url \
+            = "http://localhost:8181/api/amlight/sdntrace_cp/v1"
 
         # The decorator run_on_thread is patched, so methods that listen
         # for events do not run on threads while tested.
@@ -76,12 +77,12 @@ class TestMain(TestCase):
             (
                 {},
                 {"OPTIONS", "HEAD", "PUT"},
-                "/api/amlight/sdntrace_cp/trace/ ",
+                "/api/amlight/sdntrace_cp/v1/trace/ ",
             ),
             (
                 {},
                 {"OPTIONS", "HEAD", "PUT"},
-                "/api/amlight/sdntrace_cp/traces/ ",
+                "/api/amlight/sdntrace_cp/v1/traces/ ",
             ),
         ]
         urls = self.get_napp_urls(self.napp)

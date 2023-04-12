@@ -17,6 +17,7 @@ Changed
 - Add new case of `loop` when the outgoing interface is the same as the input interface.
 - Remove ``last_id`` and ``traces`` parameters
 - Remove ``GET /api/amlight/sdntrace_cp/trace/{trace_id}`` in ``openapi.yml``
+- Add ``v1`` on API routes. 
 
 Fixed
 =====

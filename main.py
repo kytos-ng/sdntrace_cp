@@ -57,7 +57,7 @@ class Main(KytosNApp):
         self.automate.unschedule_ids()
         self.automate.sheduler_shutdown(wait=False)
 
-    @rest('/trace', methods=['PUT'])
+    @rest('/v1/trace', methods=['PUT'])
     @validate_openapi(spec)
     def trace(self, data):
         """Trace a path."""
@@ -69,7 +69,7 @@ class Main(KytosNApp):
         result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
 
-    @rest('/traces', methods=['PUT'])
+    @rest('/v1/traces', methods=['PUT'])
     @validate_openapi(spec)
     def get_traces(self, data):
         """For bulk requests."""
