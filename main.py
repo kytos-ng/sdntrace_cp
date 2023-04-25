@@ -7,9 +7,10 @@ import ipaddress
 import pathlib
 from datetime import datetime
 
-from flask import jsonify
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import load_spec, validate_openapi
+from kytos.core.rest_api import (HTTPException, JSONResponse, Request,
+                                 get_json_or_400)
 from napps.amlight.sdntrace_cp import settings
 from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
@@ -59,27 +60,28 @@ class Main(KytosNApp):
 
     @rest('/v1/trace', methods=['PUT'])
     @validate_openapi(spec)
-    def trace(self, data):
+    def trace(self, request: Request) -> JSONResponse:
         """Trace a path."""
         result = []
+        data = get_json_or_400(request)
         entries = convert_entries(data)
         if not entries:
-            return "Bad request", 400
+            raise HTTPException(400, "Empty entries")
         stored_flows = get_stored_flows()
         result = self.tracepath(entries, stored_flows)
-        return jsonify(prepare_json(result))
+        return JSONResponse(prepare_json(result))
 
     @rest('/v1/traces', methods=['PUT'])
     @validate_openapi(spec)
-    def get_traces(self, data):
+    def get_traces(self, request: Request) -> JSONResponse:
         """For bulk requests."""
+        data = get_json_or_400(request)
         entries = convert_list_entries(data)
         stored_flows = get_stored_flows()
         results = []
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
-        temp = prepare_json(results)
-        return jsonify(temp)
+        return JSONResponse(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
