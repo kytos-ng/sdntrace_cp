@@ -4,10 +4,5 @@
 #    pip-compile --output-file requirements/dev.txt requirements/dev.in
 #
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
--e git+https://github.com/kytos-ng/kytos.git#egg=kytos
--e git+https://github.com/kytos-ng/of_core.git#egg=kytos_of_core
--e git+https://github.com/kytos-ng/sdntrace.git#egg=amlight_sdntrace
--e git+https://github.com/kytos-ng/flow_stats.git#egg=amlight_flow_stats
--e .[dev]
-pytest-asyncio==0.18.3
-black==22.3.0
+-e git+https://github.com/kytos-ng/kytos.git@feat/starlette#egg=kytos[dev]
+-e .
