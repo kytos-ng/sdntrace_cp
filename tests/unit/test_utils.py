@@ -4,12 +4,28 @@ from unittest.mock import patch, MagicMock
 
 from kytos.core.interface import Interface
 from kytos.lib.helpers import get_controller_mock, get_link_mock
-from napps.amlight.sdntrace_cp import utils
+from napps.amlight.sdntrace_cp import utils, settings
 
 
 # pylint: disable=too-many-public-methods, duplicate-code, protected-access
 class TestUtils(TestCase):
     """Test utils.py functions."""
+
+    @patch("requests.get")
+    def test_get_stored_flows(self, get_mock):
+        "Test get_stored_flows"
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"result": "ok"}
+        get_mock.return_value = response
+
+        api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows/?state=installed'
+        result = utils.get_stored_flows()
+        get_mock.assert_called_with(
+                                    api_url,
+                                    timeout=30
+                                )
+        self.assertEqual(result['result'], "ok")
 
     def test_convert_list_entries(self):
         """Verify convert entries with a list of one example"""

@@ -1,8 +1,9 @@
 """Utility functions to be used in this Napp"""
 
 import requests
-from kytos.core import KytosEvent
+from kytos.core import KytosEvent, log
 from napps.amlight.sdntrace_cp import settings
+from requests.exceptions import ConnectTimeout
 
 
 def get_stored_flows(dpids: list = None, state: str = "installed"):
@@ -16,7 +17,10 @@ def get_stored_flows(dpids: list = None, state: str = "installed"):
     if state:
         char = '&' if dpids else '/?'
         api_url += char+f'state={state}'
-    result = requests.get(api_url)
+    try:
+        result = requests.get(api_url, timeout=30)
+    except ConnectTimeout as exception:
+        log.error(f"Request has timed out: {exception}")
     flows_from_manager = result.json()
     return flows_from_manager
 

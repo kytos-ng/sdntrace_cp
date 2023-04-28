@@ -341,31 +341,6 @@ class TestMain(TestCase):
 
         self.assertFalse(result)
 
-    @patch("napps.amlight.sdntrace_cp.main.settings")
-    def test_update_circuits(self, mock_settings):
-        """Test update_circuits event listener with success."""
-        mock_settings.FIND_CIRCUITS_IN_FLOWS = True
-
-        self.napp.automate = MagicMock()
-        self.napp.automate.find_circuits = MagicMock()
-
-        self.napp.update_circuits()
-
-        self.napp.automate.find_circuits.assert_called_once()
-
-    @patch("napps.amlight.sdntrace_cp.main.settings")
-    def test_update_circuits__no_settings(self, mock_settings):
-        """Test update_circuits event listener without
-        settings option enabled."""
-        mock_settings.FIND_CIRCUITS_IN_FLOWS = False
-
-        self.napp.automate = MagicMock()
-        self.napp.automate.find_circuits = MagicMock()
-
-        self.napp.update_circuits()
-
-        self.napp.automate.find_circuits.assert_not_called()
-
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_trace(self, mock_stored_flows):
         """Test trace rest call."""

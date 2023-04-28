@@ -10,8 +10,6 @@ from datetime import datetime
 from flask import jsonify
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import load_spec, validate_openapi
-from napps.amlight.sdntrace_cp import settings
-from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
@@ -36,10 +34,6 @@ class Main(KytosNApp):
         """
         log.info("Starting Kytos SDNTrace CP App!")
 
-        self.automate = Automate(self)
-        self.automate.schedule_traces()
-        self.automate.schedule_important_traces()
-
     def execute(self):
         """This method is executed right after the setup method execution.
 
@@ -54,8 +48,6 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        self.automate.unschedule_ids()
-        self.automate.sheduler_shutdown(wait=False)
 
     @rest('/v1/trace', methods=['PUT'])
     @validate_openapi(spec)
@@ -184,12 +176,6 @@ class Main(KytosNApp):
                 'in_port': endpoint.port_number,
                 'out_port': port,
                 'entries': entries}
-
-    def update_circuits(self):
-        """Update the list of circuits after a flow change."""
-        # pylint: disable=unused-argument
-        if settings.FIND_CIRCUITS_IN_FLOWS:
-            self.automate.find_circuits()
 
     @classmethod
     def do_match(cls, flow, args):

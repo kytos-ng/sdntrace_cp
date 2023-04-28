@@ -9,6 +9,7 @@ from napps.amlight.sdntrace_cp.scheduler import Scheduler
 from napps.amlight.sdntrace_cp.utils import (clean_circuits, format_result,
                                              get_stored_flows)
 from pyof.v0x04.common.port import PortNo as Port13
+from requests.exceptions import ConnectTimeout
 
 
 class Automate:
@@ -146,13 +147,24 @@ class Automate:
                     }
                 }
             }
-            result = requests.put(settings.SDNTRACE_URL, json=entries)
+            try:
+                result = requests.put(
+                    settings.SDNTRACE_URL,
+                    json=entries,
+                    timeout=30)
+            except ConnectTimeout as exception:
+                log.error(f"Request has timed out: {exception}")
             trace = result.json()
             trace_id = trace['result']['trace_id']
             step_type = None
             while step_type != 'last':
                 time.sleep(5)
-                result = requests.get(f'{settings.SDNTRACE_URL}/{trace_id}')
+                try:
+                    result = requests.get(
+                        f'{settings.SDNTRACE_URL}/{trace_id}',
+                        timeout=30)
+                except ConnectTimeout as exception:
+                    log.error(f"Request has timed out: {exception}")
                 trace = result.json()
                 step_type = trace['result'][-1]['type']
             check = self._check_trace(circuit, trace['result'])
