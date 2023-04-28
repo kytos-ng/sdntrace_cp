@@ -210,7 +210,7 @@ class Main(KytosNApp):
             if name not in args:
                 return False
             field = args[name]
-            if name not in ('ipv4_src', 'ipv4_dst', 'ipv6_src', 'ipv6_dst'):
+            if name not in ('ipv6_src', 'ipv6_dst'):
                 if field_flow != field:
                     return False
             else:
