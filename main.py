@@ -63,7 +63,7 @@ class Main(KytosNApp):
     def trace(self, request: Request) -> JSONResponse:
         """Trace a path."""
         result = []
-        data = get_json_or_400(request)
+        data = get_json_or_400(request, self.controller.loop)
         entries = convert_entries(data)
         if not entries:
             raise HTTPException(400, "Empty entries")
@@ -75,7 +75,7 @@ class Main(KytosNApp):
     @validate_openapi(spec)
     def get_traces(self, request: Request) -> JSONResponse:
         """For bulk requests."""
-        data = get_json_or_400(request)
+        data = get_json_or_400(request, self.controller.loop)
         entries = convert_list_entries(data)
         stored_flows = get_stored_flows()
         results = []
