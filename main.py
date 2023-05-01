@@ -3,7 +3,6 @@
 Run tracepaths on OpenFlow in the Control Plane
 """
 
-import ipaddress
 import pathlib
 from datetime import datetime
 
@@ -15,7 +14,8 @@ from napps.amlight.sdntrace_cp.automate import Automate
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
-                                             match_field_dl_vlan, prepare_json)
+                                             match_field_dl_vlan,
+                                             match_field_ip, prepare_json)
 
 
 class Main(KytosNApp):
@@ -200,24 +200,19 @@ class Main(KytosNApp):
             return False
         for name in flow['flow']['match']:
             field_flow = flow['flow']['match'][name]
+            field = args.get(name)
             if name == 'dl_vlan':
-                field = args.get(name)
-                if field:
-                    field = field[-1]
                 if not match_field_dl_vlan(field, field_flow):
                     return False
                 continue
-            if name not in args:
+            if not field:
                 return False
-            field = args[name]
-            if name not in ('ipv6_src', 'ipv6_dst'):
-                if field_flow != field:
+            if name in ('ipv6_src', 'ipv6_dst'):
+                if not match_field_ip(field, field_flow):
                     return False
-            else:
-                packet_ip = int(ipaddress.ip_address(field))
-                ip_addr = flow['flow']['match'][name]
-                if packet_ip & ip_addr.netmask != ip_addr.address:
-                    return False
+                continue
+            if field_flow != field:
+                return False
         return flow
 
     def match_flows(self, switch, args, stored_flows, many=True):
