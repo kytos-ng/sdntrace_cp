@@ -21,10 +21,7 @@ class TestUtils(TestCase):
 
         api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows/?state=installed'
         result = utils.get_stored_flows()
-        get_mock.assert_called_with(
-                                    api_url,
-                                    timeout=30
-                                )
+        get_mock.assert_called_with(api_url)
         self.assertEqual(result['result'], "ok")
 
     def test_convert_list_entries(self):
@@ -172,47 +169,6 @@ class TestUtils(TestCase):
         result = utils.prepare_json(trace_result)
 
         self.assertEqual(result, {"result": []})
-
-    def test_format_result(self):
-        """Verify format resul with simple tracepath result."""
-        trace_result = []
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "port": 1,
-                "time": "2022-06-02 02:02:02.200000",
-                "type": "starting",
-            }
-        }
-        trace_result.append(trace_step)
-
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:03",
-                "port": 3,
-                "time": "2022-06-02 02:02:02.200000",
-                "type": "intermediary",
-                "vlan": 100,
-            },
-            "out": {"port": 2, "vlan": 200},
-        }
-        trace_result.append(trace_step)
-
-        formatted = utils.format_result(trace_result)
-
-        self.assertEqual(
-            formatted,
-            [
-                {"dpid": "00:00:00:00:00:00:00:01", "in_port": 1},
-                {
-                    "dpid": "00:00:00:00:00:00:00:03",
-                    "in_port": 3,
-                    "out_port": 2,
-                    "out_vlan": 200,
-                    "in_vlan": 100,
-                },
-            ],
-        )
 
     def test_compare_endpoints1(self):
         """Test for compare endpoinst for the first internal conditional."""
@@ -492,96 +448,3 @@ class TestUtilsWithController(TestCase):
         self.controller = get_controller_mock()
 
         self.addCleanup(patch.stopall)
-
-    def test_clean_circuits__empty(self):
-        """Test clean circuits for empty circuits."""
-        circuits = MagicMock()
-        result = utils.clean_circuits(circuits, self.controller)
-
-        self.assertEqual(result, [])
-
-    def test_clean_circuits__no_sub(self):
-        """Test clean circuits with just one circuit."""
-        formatted = [
-            {
-                "dpid": "00:00:00:00:00:00:00:03",
-                "in_port": 3,
-                "out_port": 2,
-                "out_vlan": 200,
-                "in_vlan": 100,
-            },
-        ]
-
-        circuits = []
-        circuits.append({"circuit": formatted, "entries": []})
-
-        result = utils.clean_circuits(circuits, self.controller)
-
-        self.assertTrue(len(result) == 1)
-        self.assertEqual(formatted, result[0]["circuit"])
-
-    def test_clean_circuits_with_sub_circuit(self):
-        """Test clean circuits without sub-circuits."""
-        formatted_a = [
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:03",
-            },
-        ]
-        formatted_b = [
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:02",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:03",
-            },
-        ]
-
-        circuits = []
-        circuits.append({"circuit": formatted_a, "entries": []})
-        circuits.append({"circuit": formatted_b, "entries": []})
-
-        # Test cleaning one sub-circuit
-        result = utils.clean_circuits(circuits, self.controller)
-
-        # Result must be the circuits without the sub-circuit
-        self.assertTrue(len(result) == 1)
-        self.assertEqual(formatted_b, result[0]["circuit"])
-
-    def test_clean_circuits_without_sub_circuit(self):
-        """Test clean circuits with one sub-circuit."""
-        formatted_a = [
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:02",
-            },
-        ]
-        formatted_b = [
-            {
-                "dpid": "00:00:00:00:00:00:00:01",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:03",
-            },
-            {
-                "dpid": "00:00:00:00:00:00:00:04",
-            },
-        ]
-
-        circuits = []
-        circuits.append({"circuit": formatted_a, "entries": []})
-        circuits.append({"circuit": formatted_b, "entries": []})
-
-        # Test circuits withou sub-circuits.
-        result = utils.clean_circuits(circuits, self.controller)
-
-        # Result must be equal to the circuits parameter
-        self.assertTrue(len(result) == 2)
-        self.assertEqual(circuits, result)

@@ -7,6 +7,7 @@ import ipaddress
 import pathlib
 from datetime import datetime
 
+import requests
 from flask import jsonify
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import load_spec, validate_openapi
@@ -55,10 +56,12 @@ class Main(KytosNApp):
         """Trace a path."""
         result = []
         entries = convert_entries(data)
-        if not entries:
-            return "Bad request", 400
-        stored_flows = get_stored_flows()
-        result = self.tracepath(entries, stored_flows)
+        try:
+            stored_flows = get_stored_flows()
+        except requests.Timeout:
+            result = []
+        else:
+            result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
 
     @rest('/v1/traces', methods=['PUT'])
@@ -66,8 +69,11 @@ class Main(KytosNApp):
     def get_traces(self, data):
         """For bulk requests."""
         entries = convert_list_entries(data)
-        stored_flows = get_stored_flows()
         results = []
+        try:
+            stored_flows = get_stored_flows()
+        except requests.Timeout:
+            return jsonify({'result': []})
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
         temp = prepare_json(results)
