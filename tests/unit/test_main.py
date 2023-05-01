@@ -316,8 +316,9 @@ class TestMain:
         self.napp.automate.find_circuits.assert_not_called()
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace(self, mock_stored_flows):
+    async def test_trace(self, mock_stored_flows, event_loop):
         """Test trace rest call."""
+        self.napp.controller.loop = event_loop
         payload = {
             "trace": {
                 "switch": {
@@ -362,8 +363,9 @@ class TestMain:
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces(self, mock_stored_flows):
+    async def test_get_traces(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
@@ -408,8 +410,9 @@ class TestMain:
         assert result1[0][0]["out"] == {"port": 2}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces(self, mock_stored_flows):
+    async def test_traces(self, mock_stored_flows, event_loop):
         """Test traces rest call"""
+        self.napp.controller.loop = event_loop
         payload = [
                     {
                         "trace": {
@@ -489,8 +492,9 @@ class TestMain:
         assert result[2][0]["out"] is None
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces_with_loop(self, mock_stored_flows):
+    async def test_traces_with_loop(self, mock_stored_flows, event_loop):
         """Test traces rest call"""
+        self.napp.controller.loop = event_loop
         payload = [
                     {
                         "trace": {
@@ -534,8 +538,9 @@ class TestMain:
         assert result[0][0]["out"] == {"port": 1, "vlan": 100}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces_no_action(self, mock_stored_flows):
+    async def test_traces_no_action(self, mock_stored_flows, event_loop):
         """Test traces rest call for two traces with different switches."""
+        self.napp.controller.loop = event_loop
         payload = [
             {
                 "trace": {
@@ -594,8 +599,9 @@ class TestMain:
         assert result[1][-1]['type'] == "incomplete"
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces_untagged(self, mock_stored_flows):
+    async def test_get_traces_untagged(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
@@ -677,8 +683,9 @@ class TestMain:
         assert result[1][0]["out"] == {"port": 3}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces_any(self, mock_stored_flows):
+    async def test_get_traces_any(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
