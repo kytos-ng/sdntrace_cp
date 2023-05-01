@@ -3,7 +3,7 @@
 import requests
 from kytos.core import log
 from napps.amlight.sdntrace_cp import settings
-from tenacity import retry, stop_after_delay
+from tenacity import RetryError, retry, stop_after_delay
 
 
 @retry(stop=stop_after_delay(30))
@@ -20,7 +20,7 @@ def get_stored_flows(dpids: list = None, state: str = "installed"):
         api_url += char+f'state={state}'
     try:
         result = requests.get(api_url)
-    except requests.Timeout as exception:
+    except RetryError as exception:
         log.error(f"Failed to get stored flows: {exception}")
         raise
     flows_from_manager = result.json()

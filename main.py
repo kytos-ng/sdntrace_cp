@@ -58,7 +58,7 @@ class Main(KytosNApp):
         entries = convert_entries(data)
         try:
             stored_flows = get_stored_flows()
-        except requests.Timeout:
+        except requests.RequestException:
             result = []
         else:
             result = self.tracepath(entries, stored_flows)
@@ -72,7 +72,7 @@ class Main(KytosNApp):
         results = []
         try:
             stored_flows = get_stored_flows()
-        except requests.Timeout:
+        except requests.RequestException:
             return jsonify({'result': []})
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
