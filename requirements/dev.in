@@ -4,5 +4,5 @@
 #    pip-compile --output-file requirements/dev.txt requirements/dev.in
 #
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
--e git+https://github.com/kytos-ng/kytos.git@feat/starlette#egg=kytos[dev]
+-e git+https://github.com/kytos-ng/kytos.git#egg=kytos[dev]
 -e .
