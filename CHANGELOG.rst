@@ -25,6 +25,10 @@ Fixed
 - In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
 - Check that an interface has been found with ``find_endpoint`` given ``switch`` and ``port`` at each ``trace_step``.
 
+General Information
+===================
+- ``@rest`` endpoints are now run by ``starlette/uvicorn`` instead of ``flask/werkzeug``.
+
 [2022.3.1] - 2023-02-27
 ***********************
 
