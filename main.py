@@ -60,7 +60,6 @@ class Main(KytosNApp):
         try:
             stored_flows = get_stored_flows()
         except tenacity.RetryError as exc:
-            log.error("/////////////Timeout: It couldn't get stored_flows")
             raise FailedDependency("It couldn't get stored_flows") from exc
         else:
             result = self.tracepath(entries, stored_flows)
