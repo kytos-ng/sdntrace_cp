@@ -1,6 +1,4 @@
 """Module to test the main napp file."""
-import json
-from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from kytos.core.interface import Interface
@@ -11,22 +9,15 @@ from kytos.lib.helpers import (
     get_link_mock,
     get_test_client,
 )
-
-from werkzeug.exceptions import FailedDependency
+from kytos.core.rest_api import HTTPException
 
 
 # pylint: disable=too-many-public-methods, too-many-lines
-class TestMain(TestCase):
+class TestMain:
     """Test the Main class."""
 
-    def setUp(self):
-        """Execute steps before each tests.
-
-        Set the server_name_url_url from amlight/sdntrace_cp
-        """
-        self.server_name_url \
-            = "http://localhost:8181/api/amlight/sdntrace_cp/v1"
-
+    def setup_method(self):
+        """Execute steps before each tests."""
         # The decorator run_on_thread is patched, so methods that listen
         # for events do not run on threads while tested.
         # Decorators have to be patched before the methods that are
@@ -35,7 +26,8 @@ class TestMain(TestCase):
         # pylint: disable=import-outside-toplevel
         from napps.amlight.sdntrace_cp.main import Main
 
-        self.napp = Main(get_controller_mock())
+        controller = get_controller_mock()
+        self.napp = Main(controller)
 
         sw1 = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
         intf_sw1 = get_interface_mock("eth1", 1, sw1)
@@ -46,49 +38,10 @@ class TestMain(TestCase):
         intf_sw2.link = None
         sw2.get_interface_by_port_no.return_value = intf_sw2
         self.napp.controller.switches = {sw1.dpid: sw1, sw2.dpid: sw2}
-
-    @staticmethod
-    def get_napp_urls(napp):
-        """Return the amlight/sdntrace_cp urls.
-
-        The urls will be like:
-
-        urls = [
-            (options, methods, url)
-        ]
-
-        """
-        controller = napp.controller
-        controller.api_server.register_napp_endpoints(napp)
-
-        urls = []
-        for rule in controller.api_server.app.url_map.iter_rules():
-            options = {}
-            for arg in rule.arguments:
-                options[arg] = f"[{0}]".format(arg)
-
-            if f"{napp.username}/{napp.name}" in str(rule):
-                urls.append((options, rule.methods, f"{str(rule)}"))
-
-        return urls
-
-    def test_verify_api_urls(self):
-        """Verify all APIs registered."""
-
-        expected_urls = [
-            (
-                {},
-                {"OPTIONS", "HEAD", "PUT"},
-                "/api/amlight/sdntrace_cp/v1/trace/ ",
-            ),
-            (
-                {},
-                {"OPTIONS", "HEAD", "PUT"},
-                "/api/amlight/sdntrace_cp/v1/traces/ ",
-            ),
-        ]
-        urls = self.get_napp_urls(self.napp)
-        assert len(expected_urls) == len(urls)
+        self.api_client = get_test_client(controller, self.napp)
+        self.base_endpoint = "amlight/sdntrace_cp/v1"
+        self.trace_endpoint = f"{self.base_endpoint}/trace"
+        self.traces_endpoint = f"{self.base_endpoint}/traces"
 
     @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step(self, mock_flow_match):
@@ -134,13 +87,12 @@ class TestMain(TestCase):
         result = self.napp.trace_step(switch, entries, stored_flows_arg)
 
         mock_flow_match.assert_called_once()
-        expected = {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "in_port": 2,
-                "out_port": 1,
-                "entries": ["entries"],
-            }
-        assert result == expected
+        assert result == {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 2,
+                    "out_port": 1,
+                    "entries": ["entries"],
+                }
 
     @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step__no_endpoint(self, mock_flow_match):
@@ -307,8 +259,7 @@ class TestMain(TestCase):
         }
 
         result = self.napp.has_loop(trace_step, trace_result)
-
-        assert result is True
+        assert result
 
     def test_has_loop__fail(self):
         """Test has_loop to detect a tracepath with loop."""
@@ -338,15 +289,12 @@ class TestMain(TestCase):
         }
 
         result = self.napp.has_loop(trace_step, trace_result)
-
-        assert result is False
+        assert not result
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_trace(self, mock_stored_flows):
+    async def test_trace(self, mock_stored_flows, event_loop):
         """Test trace rest call."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/trace/"
-
+        self.napp.controller.loop = event_loop
         payload = {
             "trace": {
                 "switch": {
@@ -378,10 +326,9 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:01": [stored_flows]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.trace_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
 
         assert len(result) == 1
@@ -392,12 +339,10 @@ class TestMain(TestCase):
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_trace_fail(self, mock_stored_flows):
+    async def test_trace_fail(self, mock_stored_flows, event_loop):
         """Test trace with a failed dependency."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/trace/"
-
-        mock_stored_flows.side_effect = FailedDependency("failed")
+        self.napp.controller.loop = event_loop
+        mock_stored_flows.side_effect = HTTPException(424, "failed")
         payload = {
             "trace": {
                 "switch": {
@@ -407,18 +352,13 @@ class TestMain(TestCase):
                 "eth": {"dl_vlan": 100},
             }
         }
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-
+        response = await self.api_client.put(self.trace_endpoint, json=payload)
         assert response.status_code == 424
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_get_traces(self, mock_stored_flows):
+    async def test_get_traces(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
@@ -449,10 +389,9 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:01": [stored_flow]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result1 = current_data["result"]
 
         assert len(result1) == 1
@@ -464,11 +403,9 @@ class TestMain(TestCase):
         assert result1[0][0]["out"] == {"port": 2}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces(self, mock_stored_flows):
+    async def test_traces(self, mock_stored_flows, event_loop):
         """Test traces rest call"""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [
                     {
                         "trace": {
@@ -523,10 +460,9 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:02": [stored_flow],
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert len(result) == 3
 
@@ -549,12 +485,10 @@ class TestMain(TestCase):
         assert result[2][0]["out"] is None
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces_fail(self, mock_stored_flows):
+    async def test_traces_fail(self, mock_stored_flows, event_loop):
         """Test traces with a failed dependency."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
-        mock_stored_flows.side_effect = FailedDependency("failed")
+        self.napp.controller.loop = event_loop
+        mock_stored_flows.side_effect = HTTPException(424, "failed")
         payload = [{
             "trace": {
                 "switch": {
@@ -564,18 +498,13 @@ class TestMain(TestCase):
                 "eth": {"dl_vlan": 100},
             }
         }]
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-
-        assert response.status_code == 424
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 424
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces_with_loop(self, mock_stored_flows):
+    async def test_traces_with_loop(self, mock_stored_flows, event_loop):
         """Test traces rest call"""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [
                     {
                         "trace": {
@@ -607,10 +536,9 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:01": [stored_flow],
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert len(result) == 1
         assert result[0][0]["dpid"] == "00:00:00:00:00:00:00:01"
@@ -620,11 +548,9 @@ class TestMain(TestCase):
         assert result[0][0]["out"] == {"port": 1, "vlan": 100}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_traces_no_action(self, mock_stored_flows):
+    async def test_traces_no_action(self, mock_stored_flows, event_loop):
         """Test traces rest call for two traces with different switches."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [
             {
                 "trace": {
@@ -674,21 +600,18 @@ class TestMain(TestCase):
             "00:00:00:00:00:00:00:02": [stored_flow2]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert len(result) == 2
         assert result[0][-1]['type'] == "incomplete"
         assert result[1][-1]['type'] == "incomplete"
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_get_traces_untagged(self, mock_stored_flows):
+    async def test_get_traces_untagged(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
@@ -742,10 +665,10 @@ class TestMain(TestCase):
             ]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+
         result = current_data["result"]
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 3}
@@ -760,10 +683,9 @@ class TestMain(TestCase):
             ]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert result[0][0]["type"] == "loop"
         assert result[0][0]["out"] == {"port": 1}
@@ -771,11 +693,9 @@ class TestMain(TestCase):
         assert result[1][0]["out"] == {"port": 3}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    def test_get_traces_any(self, mock_stored_flows):
+    async def test_get_traces_any(self, mock_stored_flows, event_loop):
         """Test traces rest call."""
-        api = get_test_client(get_controller_mock(), self.napp)
-        url = f"{self.server_name_url}/traces/"
-
+        self.napp.controller.loop = event_loop
         payload = [{
             "trace": {
                 "switch": {
@@ -839,10 +759,9 @@ class TestMain(TestCase):
             ]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 2}
@@ -858,10 +777,9 @@ class TestMain(TestCase):
             ]
         }
 
-        response = api.put(
-            url, data=json.dumps(payload), content_type="application/json"
-        )
-        current_data = json.loads(response.data)
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
         result = current_data["result"]
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 3}

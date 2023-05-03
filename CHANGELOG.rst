@@ -32,6 +32,10 @@ Removed
 - Removed ``automate`` in ``main``.
 - Removed ``update_circuits`` functionality in ``main``. 
 
+General Information
+===================
+- ``@rest`` endpoints are now run by ``starlette/uvicorn`` instead of ``flask/werkzeug``.
+
 [2022.3.1] - 2023-02-27
 ***********************
 

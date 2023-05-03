@@ -170,7 +170,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 dpid != endpoint2 dpid
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints2(self):
         """Test for compare endpoinst for the second internal conditional."""
@@ -187,7 +187,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without in_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -202,7 +202,7 @@ class TestUtils(TestCase):
 
         # Test endpoint2 without out_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -217,7 +217,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 in_port != endpoint2 out_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints3(self):
         """Test for compare endpoinst for the third internal conditional."""
@@ -236,7 +236,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 in_vlan != endpoint2 out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints4(self):
         """Test for compare endpoinst for the first internal conditional."""
@@ -254,7 +254,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 with in_vlan and endpoint2 without out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -270,7 +270,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without in_vlan and endpoint2 with out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints5(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -289,7 +289,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 out_vlan != endpoint2 in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints6(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -307,7 +307,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 with out_vlan and endpoint2 without in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:01",
@@ -323,7 +323,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without out_vlan and endpoint2 with in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is False
+        assert not result
 
     def test_compare_endpoints(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -340,7 +340,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 out_vlan != endpoint2 in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result is True
+        assert result
 
     def test_find_endpoint_b(self):
         """Test find endpoint with interface equals link endpoint B."""
@@ -403,23 +403,23 @@ class TestUtils(TestCase):
         """Test match_field_dl_vlan"""
 
         result = utils.match_field_dl_vlan(None, 0)
-        assert result is True
+        assert result
         result = utils.match_field_dl_vlan(None, 10)
-        assert result is False
+        assert not result
         result = utils.match_field_dl_vlan(None, "4096/4096")
-        assert result is False
+        assert not result
         result = utils.match_field_dl_vlan(10, 0)
-        assert result is False
+        assert not result
         result = utils.match_field_dl_vlan(10, 10)
-        assert result is True
+        assert result
         result = utils.match_field_dl_vlan(10, "4096/4096")
-        assert result is True
+        assert result
         result = utils.match_field_dl_vlan(10, 11)
-        assert result is False
+        assert not result
         result = utils.match_field_dl_vlan(3, "5/1")
-        assert result is True
+        assert result
         result = utils.match_field_dl_vlan(2, "5/1")
-        assert result is False
+        assert not result
 
 
 # pylint: disable=too-many-public-methods, too-many-lines
