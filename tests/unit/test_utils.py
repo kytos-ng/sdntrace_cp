@@ -21,8 +21,8 @@ class TestUtils(TestCase):
 
         api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows/?state=installed'
         result = utils.get_stored_flows()
-        get_mock.assert_called_with(api_url)
-        self.assertEqual(result['result'], "ok")
+        get_mock.assert_called_with(api_url, timeout=20)
+        assert result['result'] == "ok"
 
     def test_convert_list_entries(self):
         """Verify convert entries with a list of one example"""
@@ -32,15 +32,12 @@ class TestUtils(TestCase):
         entries = {"trace": switch}
 
         result = utils.convert_list_entries([entries])
-
-        self.assertEqual(
-            result,
-            [{
+        expected = [{
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 1,
                 "dl_vlan": [100],
-            }],
-        )
+            }]
+        assert result == expected
 
     def test_convert_entries_vlan(self):
         """Verify convert entries with simple example with vlan."""
@@ -51,15 +48,12 @@ class TestUtils(TestCase):
         entries = {"trace": switch}
 
         result = utils.convert_entries(entries)
-
-        self.assertEqual(
-            result,
-            {
+        expected = {
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 1,
                 "dl_vlan": [100],
-            },
-        )
+            }
+        assert result == expected
 
     def test_prepare_json(self):
         """Verify prepare json with simple tracepath result."""
@@ -90,10 +84,7 @@ class TestUtils(TestCase):
         trace_result.append(trace_step)
 
         result = utils.prepare_json(trace_result)
-
-        self.assertEqual(
-            result,
-            {
+        expected = {
                 "result": [
                     {
                         "dpid": "00:00:00:00:00:00:00:01",
@@ -110,8 +101,8 @@ class TestUtils(TestCase):
                         "out": {"port": 1, "vlan": 123},
                     },
                 ]
-            },
-        )
+            }
+        assert result == expected
 
     def test_prepare_list_json(self):
         """Verify prepare list with a simple tracepath result."""
@@ -142,9 +133,7 @@ class TestUtils(TestCase):
         trace_result.append(trace_step)
 
         result = utils._prepare_json(trace_result)
-
-        self.assertEqual(
-            result, [
+        expected = [
                     {
                         "dpid": "00:00:00:00:00:00:00:01",
                         "port": 1,
@@ -160,7 +149,7 @@ class TestUtils(TestCase):
                         "out": {"port": 1, "vlan": 123},
                     },
                 ]
-        )
+        assert result == expected
 
     def test_prepare_json_empty(self):
         """Verify prepare json with empty result."""
@@ -168,7 +157,7 @@ class TestUtils(TestCase):
 
         result = utils.prepare_json(trace_result)
 
-        self.assertEqual(result, {"result": []})
+        assert result == {"result": []}
 
     def test_compare_endpoints1(self):
         """Test for compare endpoinst for the first internal conditional."""
@@ -181,7 +170,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 dpid != endpoint2 dpid
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints2(self):
         """Test for compare endpoinst for the second internal conditional."""
@@ -198,7 +187,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without in_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -213,7 +202,7 @@ class TestUtils(TestCase):
 
         # Test endpoint2 without out_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -228,7 +217,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 in_port != endpoint2 out_port
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints3(self):
         """Test for compare endpoinst for the third internal conditional."""
@@ -247,7 +236,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 in_vlan != endpoint2 out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints4(self):
         """Test for compare endpoinst for the first internal conditional."""
@@ -265,7 +254,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 with in_vlan and endpoint2 without out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:03",
@@ -281,7 +270,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without in_vlan and endpoint2 with out_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints5(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -300,7 +289,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 out_vlan != endpoint2 in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints6(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -318,7 +307,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 with out_vlan and endpoint2 without in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
         endpoint1 = {
             "dpid": "00:00:00:00:00:00:00:01",
@@ -334,7 +323,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 without out_vlan and endpoint2 with in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-        self.assertFalse(result)
+        assert result is False
 
     def test_compare_endpoints(self):
         """Test for compare endpoinst for the fifth internal conditional."""
@@ -351,8 +340,7 @@ class TestUtils(TestCase):
 
         # Test endpoint1 out_vlan != endpoint2 in_vlan
         result = utils._compare_endpoints(endpoint1, endpoint2)
-
-        self.assertTrue(result)
+        assert result is True
 
     def test_find_endpoint_b(self):
         """Test find endpoint with interface equals link endpoint B."""
@@ -368,7 +356,7 @@ class TestUtils(TestCase):
         mock_switch.get_interface_by_port_no.return_value = mock_interface
         expected = {'endpoint': mock_interface.link.endpoint_a}
         result = utils.find_endpoint(mock_switch, port)
-        self.assertEqual(result, expected)
+        assert result == expected
 
     def test_find_endpoint_a(self):
         """Test find endpoint with interface equals link endpoint A."""
@@ -384,7 +372,7 @@ class TestUtils(TestCase):
         mock_switch.get_interface_by_port_no.return_value = mock_interface
         expected = {'endpoint': mock_interface.link.endpoint_b}
         result = utils.find_endpoint(mock_switch, port)
-        self.assertEqual(result, expected)
+        assert result == expected
 
     def test_find_endpoint_link_none(self):
         """Test find endpoint without link."""
@@ -398,7 +386,7 @@ class TestUtils(TestCase):
 
         result = utils.find_endpoint(mock_switch, port)
         assert 'endpoint' in result
-        self.assertIsNone(result['endpoint'])
+        assert result['endpoint'] is None
 
     def test_convert_vlan(self):
         """Test convert_vlan function"""
@@ -415,23 +403,23 @@ class TestUtils(TestCase):
         """Test match_field_dl_vlan"""
 
         result = utils.match_field_dl_vlan(None, 0)
-        self.assertTrue(result)
+        assert result is True
         result = utils.match_field_dl_vlan(None, 10)
-        self.assertFalse(result)
+        assert result is False
         result = utils.match_field_dl_vlan(None, "4096/4096")
-        self.assertFalse(result)
+        assert result is False
         result = utils.match_field_dl_vlan(10, 0)
-        self.assertFalse(result)
+        assert result is False
         result = utils.match_field_dl_vlan(10, 10)
-        self.assertTrue(result)
+        assert result is True
         result = utils.match_field_dl_vlan(10, "4096/4096")
-        self.assertTrue(result)
+        assert result is True
         result = utils.match_field_dl_vlan(10, 11)
-        self.assertFalse(result)
+        assert result is False
         result = utils.match_field_dl_vlan(3, "5/1")
-        self.assertTrue(result)
+        assert result is True
         result = utils.match_field_dl_vlan(2, "5/1")
-        self.assertFalse(result)
+        assert result is False
 
 
 # pylint: disable=too-many-public-methods, too-many-lines

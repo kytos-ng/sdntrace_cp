@@ -1,12 +1,18 @@
 """Utility functions to be used in this Napp"""
 
 import requests
-from kytos.core import log
+from kytos.core.retry import before_sleep
 from napps.amlight.sdntrace_cp import settings
-from tenacity import RetryError, retry, stop_after_delay
+from requests.exceptions import Timeout
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_random)
 
 
-@retry(stop=stop_after_delay(30))
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_random(min=0.1, max=0.2),
+    before_sleep=before_sleep,
+    retry=retry_if_exception_type((Timeout, ConnectionError)))
 def get_stored_flows(dpids: list = None, state: str = "installed"):
     """Get stored flows from flow_manager napps."""
     api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
@@ -18,11 +24,7 @@ def get_stored_flows(dpids: list = None, state: str = "installed"):
     if state:
         char = '&' if dpids else '/?'
         api_url += char+f'state={state}'
-    try:
-        result = requests.get(api_url)
-    except RetryError as exception:
-        log.error(f"Failed to get stored flows: {exception}")
-        raise
+    result = requests.get(api_url, timeout=20)
     flows_from_manager = result.json()
     return flows_from_manager
 

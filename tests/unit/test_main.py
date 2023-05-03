@@ -12,6 +12,8 @@ from kytos.lib.helpers import (
     get_test_client,
 )
 
+from werkzeug.exceptions import FailedDependency
+
 
 # pylint: disable=too-many-public-methods, too-many-lines
 class TestMain(TestCase):
@@ -86,7 +88,7 @@ class TestMain(TestCase):
             ),
         ]
         urls = self.get_napp_urls(self.napp)
-        self.assertEqual(len(expected_urls), len(urls))
+        assert len(expected_urls) == len(urls)
 
     @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step(self, mock_flow_match):
@@ -132,15 +134,13 @@ class TestMain(TestCase):
         result = self.napp.trace_step(switch, entries, stored_flows_arg)
 
         mock_flow_match.assert_called_once()
-        self.assertEqual(
-            result,
-            {
+        expected = {
                 "dpid": "00:00:00:00:00:00:00:01",
                 "in_port": 2,
                 "out_port": 1,
                 "entries": ["entries"],
-            },
-        )
+            }
+        assert result == expected
 
     @patch("napps.amlight.sdntrace_cp.main.Main.match_and_apply")
     def test_trace_step__no_endpoint(self, mock_flow_match):
@@ -177,7 +177,7 @@ class TestMain(TestCase):
         result = self.napp.trace_step(switch, entries, stored_flows_arg)
 
         mock_flow_match.assert_called_once()
-        self.assertEqual(result, {"entries": ["entries"], "out_port": 1})
+        assert result == {"entries": ["entries"], "out_port": 1}
 
     def test_trace_step__no_flow(self):
         """Test trace_step without flows for the switch."""
@@ -308,7 +308,7 @@ class TestMain(TestCase):
 
         result = self.napp.has_loop(trace_step, trace_result)
 
-        self.assertTrue(result)
+        assert result is True
 
     def test_has_loop__fail(self):
         """Test has_loop to detect a tracepath with loop."""
@@ -339,7 +339,7 @@ class TestMain(TestCase):
 
         result = self.napp.has_loop(trace_step, trace_result)
 
-        self.assertFalse(result)
+        assert result is False
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_trace(self, mock_stored_flows):
@@ -390,6 +390,28 @@ class TestMain(TestCase):
         assert result[0]["type"] == "last"
         assert result[0]["vlan"] == 100
         assert result[0]["out"] == {"port": 2, "vlan": 200}
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    def test_trace_fail(self, mock_stored_flows):
+        """Test trace with a failed dependency."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/trace/"
+
+        mock_stored_flows.side_effect = FailedDependency("failed")
+        payload = {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": 100},
+            }
+        }
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+
+        assert response.status_code == 424
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_get_traces(self, mock_stored_flows):
@@ -525,6 +547,28 @@ class TestMain(TestCase):
         assert result[2][0]["type"] == "incomplete"
         assert result[2][0]["vlan"] == 100
         assert result[2][0]["out"] is None
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    def test_traces_fail(self, mock_stored_flows):
+        """Test traces with a failed dependency."""
+        api = get_test_client(get_controller_mock(), self.napp)
+        url = f"{self.server_name_url}/traces/"
+
+        mock_stored_flows.side_effect = FailedDependency("failed")
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": 100},
+            }
+        }]
+        response = api.put(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+
+        assert response.status_code == 424
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     def test_traces_with_loop(self, mock_stored_flows):

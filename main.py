@@ -7,7 +7,7 @@ import ipaddress
 import pathlib
 from datetime import datetime
 
-import requests
+import tenacity
 from flask import jsonify
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import load_spec, validate_openapi
@@ -15,6 +15,7 @@ from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
                                              match_field_dl_vlan, prepare_json)
+from werkzeug.exceptions import FailedDependency
 
 
 class Main(KytosNApp):
@@ -58,8 +59,9 @@ class Main(KytosNApp):
         entries = convert_entries(data)
         try:
             stored_flows = get_stored_flows()
-        except requests.RequestException:
-            result = []
+        except tenacity.RetryError as exc:
+            log.error("/////////////Timeout: It couldn't get stored_flows")
+            raise FailedDependency("It couldn't get stored_flows") from exc
         else:
             result = self.tracepath(entries, stored_flows)
         return jsonify(prepare_json(result))
@@ -72,8 +74,8 @@ class Main(KytosNApp):
         results = []
         try:
             stored_flows = get_stored_flows()
-        except requests.RequestException:
-            return jsonify({'result': []})
+        except tenacity.RetryError as exc:
+            raise FailedDependency("It couldn't get stored_flows") from exc
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
         temp = prepare_json(results)
