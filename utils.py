@@ -133,7 +133,8 @@ def match_field_dl_vlan(value, field_flow):
     0 is not allowed for value. """
     if not value:
         return field_flow == 0
-    value = value[-1]
+    if isinstance(value, list):
+        value = value[-1]
     value_flow, mask_flow = convert_vlan(field_flow)
     return value & (mask_flow & 4095) == value_flow & (mask_flow & 4095)
 
