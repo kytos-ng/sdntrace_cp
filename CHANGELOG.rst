@@ -25,6 +25,17 @@ Fixed
 - In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
 - Check that an interface has been found with ``find_endpoint`` given ``switch`` and ``port`` at each ``trace_step``.
 
+Removed
+=======
+
+- Removed ``TRIGGER_SCHEDULE_TRACES``, ``TRIGGER_IMPORTANT_CIRCUITS`` and ``FIND_CIRCUITS_IN_FLOWS`` from settings.
+- Removed ``automate`` in ``main``.
+- Removed ``update_circuits`` functionality in ``main``. 
+
+General Information
+===================
+- ``@rest`` endpoints are now run by ``starlette/uvicorn`` instead of ``flask/werkzeug``.
+
 [2022.3.1] - 2023-02-27
 ***********************
 

@@ -6,11 +6,11 @@ Run tracepaths on OpenFlow in the Control Plane
 import pathlib
 from datetime import datetime
 
-from flask import jsonify
+import tenacity
 from kytos.core import KytosNApp, log, rest
 from kytos.core.helpers import load_spec, validate_openapi
-from napps.amlight.sdntrace_cp import settings
-from napps.amlight.sdntrace_cp.automate import Automate
+from kytos.core.rest_api import (HTTPException, JSONResponse, Request,
+                                 get_json_or_400)
 from napps.amlight.sdntrace_cp.utils import (convert_entries,
                                              convert_list_entries,
                                              find_endpoint, get_stored_flows,
@@ -36,10 +36,6 @@ class Main(KytosNApp):
         """
         log.info("Starting Kytos SDNTrace CP App!")
 
-        self.automate = Automate(self)
-        self.automate.schedule_traces()
-        self.automate.schedule_important_traces()
-
     def execute(self):
         """This method is executed right after the setup method execution.
 
@@ -54,32 +50,37 @@ class Main(KytosNApp):
 
         If you have some cleanup procedure, insert it here.
         """
-        self.automate.unschedule_ids()
-        self.automate.sheduler_shutdown(wait=False)
 
     @rest('/v1/trace', methods=['PUT'])
     @validate_openapi(spec)
-    def trace(self, data):
+    def trace(self, request: Request) -> JSONResponse:
         """Trace a path."""
         result = []
+        data = get_json_or_400(request, self.controller.loop)
         entries = convert_entries(data)
         if not entries:
-            return "Bad request", 400
-        stored_flows = get_stored_flows()
+            raise HTTPException(400, "Empty entries")
+        try:
+            stored_flows = get_stored_flows()
+        except tenacity.RetryError as exc:
+            raise HTTPException(424, "It couldn't get stored_flows") from exc
         result = self.tracepath(entries, stored_flows)
-        return jsonify(prepare_json(result))
+        return JSONResponse(prepare_json(result))
 
     @rest('/v1/traces', methods=['PUT'])
     @validate_openapi(spec)
-    def get_traces(self, data):
+    def get_traces(self, request: Request) -> JSONResponse:
         """For bulk requests."""
+        data = get_json_or_400(request, self.controller.loop)
         entries = convert_list_entries(data)
-        stored_flows = get_stored_flows()
         results = []
+        try:
+            stored_flows = get_stored_flows()
+        except tenacity.RetryError as exc:
+            raise HTTPException(424, "It couldn't get stored_flows") from exc
         for entry in entries:
             results.append(self.tracepath(entry, stored_flows))
-        temp = prepare_json(results)
-        return jsonify(temp)
+        return JSONResponse(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
         """Trace a path for a packet represented by entries."""
@@ -184,12 +185,6 @@ class Main(KytosNApp):
                 'in_port': endpoint.port_number,
                 'out_port': port,
                 'entries': entries}
-
-    def update_circuits(self):
-        """Update the list of circuits after a flow change."""
-        # pylint: disable=unused-argument
-        if settings.FIND_CIRCUITS_IN_FLOWS:
-            self.automate.find_circuits()
 
     @classmethod
     def do_match(cls, flow, args):

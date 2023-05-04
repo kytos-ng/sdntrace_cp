@@ -3,10 +3,18 @@
 import ipaddress
 
 import requests
-from kytos.core import KytosEvent
+from kytos.core.retry import before_sleep
 from napps.amlight.sdntrace_cp import settings
+from requests.exceptions import Timeout
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_random)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_random(min=0.1, max=0.2),
+    before_sleep=before_sleep,
+    retry=retry_if_exception_type((Timeout, ConnectionError)))
 def get_stored_flows(dpids: list = None, state: str = "installed"):
     """Get stored flows from flow_manager napps."""
     api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
@@ -18,7 +26,7 @@ def get_stored_flows(dpids: list = None, state: str = "installed"):
     if state:
         char = '&' if dpids else '/?'
         api_url += char+f'state={state}'
-    result = requests.get(api_url)
+    result = requests.get(api_url, timeout=20)
     flows_from_manager = result.json()
     return flows_from_manager
 
@@ -86,60 +94,6 @@ def prepare_json(trace_result):
     else:
         result = _prepare_json(trace_result)
     return {'result': result}
-
-
-def format_result(trace):
-    """Format the result for automate circuit finding"""
-    result = []
-    for step in trace:
-        new_result = {'dpid': step['in']['dpid'],
-                      'in_port': step['in']['port']}
-        if 'out' in step:
-            new_result.update({'out_port': step['out']['port']})
-            if 'vlan' in step['out']:
-                new_result.update({'out_vlan': step['out']['vlan']})
-        if 'vlan' in step['in']:
-            new_result.update({'in_vlan': step['in']['vlan']})
-        result.append(new_result)
-    return result
-
-
-def clean_circuits(circuits, controller):
-    """Remove sub-circuits."""
-    cleaned_circuits = []
-    event = KytosEvent(name='amlight/kytos_courier.slack_send')
-    content = {
-        'channel': settings.SLACK_CHANNEL,
-        'source': 'amlight/sdntrace_cp'
-    }
-    for circuit in circuits:
-        sub = False
-        for other in circuits:
-            if circuit['circuit'] == other['circuit']:
-                continue
-            sub = True
-            for step in circuit['circuit']:
-                if step not in other['circuit']:
-                    sub = False
-                    break
-            if sub:
-                break
-        if not sub:
-            cleaned_circuits.append(circuit)
-
-    for circuit in cleaned_circuits:
-        has_return = False
-        for other in cleaned_circuits:
-            if _compare_endpoints(circuit['circuit'][0],
-                                  other['circuit'][-1]) \
-                    and _compare_endpoints(circuit['circuit'][-1],
-                                           other['circuit'][0]):
-                has_return = True
-        if not has_return:
-            content['m_body'] = f"Circuit {circuit['circuit']} has no way back"
-            event.content['message'] = content
-            controller.buffers.app.put(event)
-    return cleaned_circuits
 
 
 # pylint: disable=too-many-return-statements
