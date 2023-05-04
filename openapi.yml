@@ -131,7 +131,14 @@ paths:
             application/json:
               schema:
                 type: string
-                example: Bad request
+                example: Bad requestç
+        424:
+          description: "Stored flows could not be fetched"
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Failed Dependency
   /v1/traces:
     put:
       summary: Trace paths given switches
