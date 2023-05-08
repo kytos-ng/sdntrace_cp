@@ -133,13 +133,13 @@ def match_field_dl_vlan(value, field_flow):
     0 is not allowed for value. """
     if not value:
         return field_flow == 0
-    if isinstance(value, list):
-        value = value[-1]
+    value = value[-1]
     value_flow, mask_flow = convert_vlan(field_flow)
     return value & (mask_flow & 4095) == value_flow & (mask_flow & 4095)
 
 
 def match_field_ip(field, field_flow):
     "Verify match in ip fields"
-    packet_ip = int(ipaddress.ip_address(field))
-    return packet_ip & field_flow.netmask == field_flow.address
+    packet_ip = ipaddress.ip_network(field, strict=False)
+    flow_ip = ipaddress.ip_network(field_flow, strict=False)
+    return packet_ip == flow_ip

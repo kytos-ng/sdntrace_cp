@@ -202,7 +202,7 @@ class Main(KytosNApp):
                 continue
             if not field:
                 return False
-            if name in ('ipv6_src', 'ipv6_dst'):
+            if name in ('nw_src', 'nw_dst', 'ipv6_src', 'ipv6_dst'):
                 if not match_field_ip(field, field_flow):
                     return False
                 continue
