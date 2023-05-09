@@ -193,19 +193,19 @@ paths:
                         properties:
                           nw_src:
                             type: string
-                            description: Source IP for IPv4. Supports mask, if not specified, /32 is assumed.
+                            description: Source IP for IPv4. Supports mask.
                             example: 192.168.20.21
                           nw_dst:
                             type: string
-                            description: Destination IP for IPv4. Supports mask, if not specified, /32 is assumed.
+                            description: Destination IP for IPv4. Supports mask.
                             example: 192.168.25.123
                           ipv6_src:
                             type: string
-                            description: Source IP for IPv6. Supports mask, if not specified, /128 is assumed.
+                            description: Source IP for IPv6. Supports mask.
                             example: '2002:db8::8a3f:362:7897'
                           ipv6_dst:
                             type: string
-                            description: Destination IP for IPv6. Supports mask, if not specified, /128 is assumed.
+                            description: Destination IP for IPv6. Supports mask.
                             example: '2002:db8::8a3f:362:7897'
                           nw_proto:
                             type: integer

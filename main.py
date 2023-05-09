@@ -200,6 +200,8 @@ class Main(KytosNApp):
                 if not match_field_dl_vlan(field, field_flow):
                     return False
                 continue
+            # In the case of dl_vlan field, the match must be checked
+            # even if this field is not in the packet args.
             if not field:
                 return False
             if name in ('nw_src', 'nw_dst', 'ipv6_src', 'ipv6_dst'):
