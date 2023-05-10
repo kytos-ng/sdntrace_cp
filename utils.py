@@ -140,11 +140,6 @@ def match_field_dl_vlan(value, field_flow):
 
 def match_field_ip(field, field_flow):
     "Verify match in ip fields"
-    field_list = field.split('/')
-    field_flow_list = field_flow.split('/')
-    if len(field_flow_list) > len(field_list):
-        field_list.append(field_flow_list[-1])
-        field = '/'.join(field_list)
-    packet_network = ipaddress.ip_network(field, strict=False)
+    packet_address = ipaddress.ip_address(field)
     flow_network = ipaddress.ip_network(field_flow, strict=False)
-    return packet_network == flow_network
+    return packet_address in flow_network
