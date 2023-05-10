@@ -408,17 +408,63 @@ class TestUtils(TestCase):
         assert not result
         result = utils.match_field_dl_vlan(None, "4096/4096")
         assert not result
-        result = utils.match_field_dl_vlan(10, 0)
+        result = utils.match_field_dl_vlan([10], 0)
         assert not result
-        result = utils.match_field_dl_vlan(10, 10)
+        result = utils.match_field_dl_vlan([10], 10)
         assert result
-        result = utils.match_field_dl_vlan(10, "4096/4096")
+        result = utils.match_field_dl_vlan([10], "4096/4096")
         assert result
-        result = utils.match_field_dl_vlan(10, 11)
+        result = utils.match_field_dl_vlan([10], 11)
         assert not result
-        result = utils.match_field_dl_vlan(3, "5/1")
+        result = utils.match_field_dl_vlan([3], "5/1")
         assert result
-        result = utils.match_field_dl_vlan(2, "5/1")
+        result = utils.match_field_dl_vlan([2], "5/1")
+        assert not result
+
+    def test_match_field_ip(self):
+        """Test match_field_ip"""
+        # IPv4 cases
+        result = utils.match_field_ip('192.168.20.21', '192.168.20.21')
+        assert result
+        result = utils.match_field_ip('192.168.20.21', '192.168.20.21/10')
+        assert result
+        result = utils.match_field_ip('192.168.20.21', '192.168.20.21/32')
+        assert result
+        result = utils.match_field_ip(
+                                        '192.168.20.21',
+                                        '192.168.20.21/255.255.255.255'
+                                    )
+        assert result
+        result = utils.match_field_ip('192.168.20.30', '192.168.20.21')
+        assert not result
+        result = utils.match_field_ip('192.200.20.30', '192.168.20.21/10')
+        assert not result
+
+        # IPv6 cases
+        result = utils.match_field_ip(
+                                        '2002:db8::8a3f:362:7897',
+                                        '2002:db8::8a3f:362:7897'
+                                    )
+        assert result
+        result = utils.match_field_ip(
+                                        '2002:db8::8a3f:362:7897',
+                                        '2002:db8::8a3f:362:7897/10'
+                                    )
+        assert result
+        result = utils.match_field_ip(
+                                        '2002:db8::8a3f:362:7897',
+                                        '2002:db8::8a3f:362:7897/128'
+                                    )
+        assert result
+        result = utils.match_field_ip(
+                                        '2002:db8::8a3f:362:7',
+                                        '2002:db8::8a3f:362:7897'
+                                    )
+        assert not result
+        result = utils.match_field_ip(
+                                        '3002:db8::9a3f:362:7897',
+                                        '2002:db8::8a3f:362:7897/10'
+                                    )
         assert not result
 
 
