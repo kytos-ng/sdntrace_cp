@@ -785,3 +785,132 @@ class TestMain:
         assert result[0][0]["out"] == {"port": 3}
         assert result[1][0]["type"] == "incomplete"
         assert result[1][0]["out"] is None
+
+    def test_do_match(self):
+        """Test do_match."""
+
+        # Check dl_vlan
+        flow = {'flow': {'match': {'dl_vlan': 10}}}
+        args = {'dl_vlan': [10]}
+        resp = self.napp.do_match(flow, args)
+        assert resp == flow
+
+        flow = {'flow': {'match': {'dl_vlan': 0}}}
+        args = {}
+        resp = self.napp.do_match(flow, args)
+        assert resp == flow
+
+        flow = {'flow': {'match': {'dl_vlan': '10/10'}}}
+        args = {'dl_vlan': [10]}
+        resp = self.napp.do_match(flow, args)
+        assert resp == flow
+
+        flow = {'flow': {'match': {'dl_vlan': '10/10'}}}
+        args = {'dl_vlan': [2]}
+        resp = self.napp.do_match(flow, args)
+        assert not resp
+
+        # Check ip
+        flow = {'flow': {'match': {
+                                    'nw_src': '192.168.20.21/10',
+                                    'nw_dst': '192.168.20.21/32',
+                                    'ipv6_src': '2002:db8::8a3f:362:7897/10',
+                                    'ipv6_dst': '2002:db8::8a3f:362:7897/128',
+                                  }
+                         }
+                }
+        args = {
+                    'nw_src': '192.168.20.21',
+                    'nw_dst': '192.168.20.21',
+                    'ipv6_src': '2002:db8::8a3f:362:7897',
+                    'ipv6_dst': '2002:db8::8a3f:362:7897',
+               }
+        resp = self.napp.do_match(flow, args)
+        assert resp == flow
+
+        flow = {'flow': {'match': {'nw_src': '192.168.20.21'}}}
+        args = {'nw_src': '192.168.20.30'}
+        resp = self.napp.do_match(flow, args)
+        assert not resp
+
+        flow = {'flow': {'match': {'ipv6_src': '2002:db8::8a3f:362:7'}}}
+        args = {'ipv6_src': '2002:db8::8a3f:362:7897'}
+        resp = self.napp.do_match(flow, args)
+        assert not resp
+
+        # General
+        flow = {'flow': {'match': {'in_port': 1, 'dl_vlan': '4096/4096'}}}
+        args = {'in_port': 1, 'dl_vlan': [1]}
+        resp = self.napp.do_match(flow, args)
+        assert resp == flow
+
+        flow = {'flow': {'match': {'in_port': 1, 'dl_vlan': '4096/4096'}}}
+        args = {'dl_vlan': [1]}
+        resp = self.napp.do_match(flow, args)
+        assert not resp
+
+    def test_match_flows(self):
+        """Test match_flows."""
+        flow = {"flow": {"match": {"dl_vlan": "10/10", "in_port": 1}}}
+        switch = get_switch_mock("00:00:00:00:00:00:00:01")
+        stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
+        args = {"dl_vlan": [10], "in_port": 1}
+        resp = self.napp.match_flows(switch, args, stored_flows)
+        assert resp == [flow]
+
+        stored_flows = {}
+        resp = self.napp.match_flows(switch, args, stored_flows)
+        assert not resp
+
+    def test_match_and_apply(self):
+        """Test match_and_apply."""
+        switch = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
+        flow = {"flow": {
+                            "match": {"dl_vlan": "10/10", "in_port": 1},
+                            "actions": [{'action_type': 'output', 'port': 1}]
+                         }
+                }
+        stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
+        args = {"dl_vlan": [10], "in_port": 1}
+        resp = self.napp.match_and_apply(switch, args, stored_flows)
+        assert resp[0] == flow
+        assert resp[2] == 1
+
+        flow = {"flow": {
+                            "match": {"dl_vlan": "10/10", "in_port": 1},
+                            "actions": [{'action_type': 'push_vlan'}]
+                         }
+                }
+        stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
+        args = {"dl_vlan": [10], "in_port": 1}
+        resp = self.napp.match_and_apply(switch, args, stored_flows)
+        assert resp[0] == flow
+        assert resp[1]['dl_vlan'] == [10, 0]
+
+        flow = {"flow": {
+                            "match": {"dl_vlan": "10/10", "in_port": 1},
+                            "actions": [{'action_type': 'pop_vlan'}]
+                         }
+                }
+        stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
+        args = {"dl_vlan": [10], "in_port": 1}
+        resp = self.napp.match_and_apply(switch, args, stored_flows)
+        assert resp[0] == flow
+        assert 'dl_vlan' not in resp[1]
+
+        flow = {"flow": {
+                            "match": {"dl_vlan": "10/10", "in_port": 1},
+                            "actions": [{'action_type': 'set_vlan',
+                                         'vlan_id': 2}]
+                         }
+                }
+        stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
+        args = {"dl_vlan": [10], "in_port": 1}
+        resp = self.napp.match_and_apply(switch, args, stored_flows)
+        assert resp[0] == flow
+        assert resp[1]['dl_vlan'] == [2]
+
+        stored_flows = {}
+        resp = self.napp.match_and_apply(switch, args, stored_flows)
+        assert not resp[0]
+        assert not resp[2]
