@@ -30,9 +30,6 @@ To install this NApp, first, make sure to have the same venv activated as you ha
 Requirements
 ============
 
-- `amlight/scheduler <https://github.com/kytos-ng/scheduler>`_
-
-
 Events
 ======
 
