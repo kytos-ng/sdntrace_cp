@@ -31,6 +31,7 @@ Removed
 - Removed ``TRIGGER_SCHEDULE_TRACES``, ``TRIGGER_IMPORTANT_CIRCUITS`` and ``FIND_CIRCUITS_IN_FLOWS`` from settings.
 - Removed ``automate`` in ``main``.
 - Removed ``update_circuits`` functionality in ``main``. 
+- Removed the dependency on ``apscheduler``.
 
 General Information
 ===================
