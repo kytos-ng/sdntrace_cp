@@ -6,22 +6,25 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [UNRELEASED] - Under development
 ********************************
 
+[2023.1.0] - 2023-06-12
+***********************
+
 Added
 =====
 - Support "untagged" and "any" on EVCs.
-- `PUT /trace and /traces` endpoints validate payload with ``@validate_openapi`` from kytos.core.
+- ``PUT /trace and /traces`` endpoints validate payload with ``@validate_openapi``
 
 Changed
 =======
 - Update ``tracepath`` to support two new trace types: ``loop`` and ``incomplete``. Both represent a failure, and ``incomplete`` type also replaces the empty list that was returned as a response in some cases. Other three types are ``starting`` for the first trace_step, ``intermediary`` for subsequent trace_steps (previously ``trace``), and ``last`` for the last trace_step representing successful trace.
-- Add new case of `loop` when the outgoing interface is the same as the input interface.
+- Add new case of ``loop`` when the outgoing interface is the same as the input interface.
 - Remove ``last_id`` and ``traces`` parameters
 - Remove ``GET /api/amlight/sdntrace_cp/trace/{trace_id}`` in ``openapi.yml``
-- Add ``v1`` on API routes. 
+- ``v1`` prefix was added on the API routes to stabilize this NApp.
 
 Fixed
 =====
-- Check the ``actions`` field in flows when running Sdntrace to avoid KeyError.
+- Check the ``actions`` field in flows when running a trace to avoid ``KeyError``.
 - In ``PUT /trace`` and ``PUT /traces``, field ``switch``` is defined as required, as well as its parameters ``dpid``` and ``in_port``.
 - Check that an interface has been found with ``find_endpoint`` given ``switch`` and ``port`` at each ``trace_step``.
 
