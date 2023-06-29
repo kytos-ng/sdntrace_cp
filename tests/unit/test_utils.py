@@ -1,14 +1,14 @@
 """Module to test the utils.py file."""
-from unittest import TestCase
+import pytest
 from unittest.mock import patch, MagicMock
 
 from kytos.core.interface import Interface
-from kytos.lib.helpers import get_controller_mock, get_link_mock
+from kytos.lib.helpers import get_link_mock
 from napps.amlight.sdntrace_cp import utils, settings
 
 
 # pylint: disable=too-many-public-methods, duplicate-code, protected-access
-class TestUtils(TestCase):
+class TestUtils():
     """Test utils.py functions."""
 
     @patch("requests.get")
@@ -57,31 +57,29 @@ class TestUtils(TestCase):
 
     def test_prepare_json(self):
         """Verify prepare json with simple tracepath result."""
-        trace_result = []
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "port": 1,
-                "time": "2022-06-01 01:01:01.100000",
-                "type": "starting",
+        trace_result = [
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "port": 1,
+                    "time": "2022-06-01 01:01:01.100000",
+                    "type": "starting",
+                }
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "port": 3,
+                    "time": "2022-06-01 01:01:01.100000",
+                    "type": "intermediary",
+                    "vlan": 100,
+                },
+                "out": {
+                    "port": 1,
+                    "vlan": 123,
+                },
             }
-        }
-        trace_result.append(trace_step)
-
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:03",
-                "port": 3,
-                "time": "2022-06-01 01:01:01.100000",
-                "type": "intermediary",
-                "vlan": 100,
-            },
-            "out": {
-                "port": 1,
-                "vlan": 123,
-            },
-        }
-        trace_result.append(trace_step)
+        ]
 
         result = utils.prepare_json(trace_result)
         expected = {
@@ -106,31 +104,29 @@ class TestUtils(TestCase):
 
     def test_prepare_list_json(self):
         """Verify prepare list with a simple tracepath result."""
-        trace_result = []
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:01",
-                "port": 1,
-                "time": "2022-06-01 01:01:01.100000",
-                "type": "starting",
+        trace_result = [
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "port": 1,
+                    "time": "2022-06-01 01:01:01.100000",
+                    "type": "starting",
+                }
+            },
+            {
+                "in": {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "port": 3,
+                    "time": "2022-06-01 01:01:01.100000",
+                    "type": "intermediary",
+                    "vlan": 100,
+                },
+                "out": {
+                    "port": 1,
+                    "vlan": 123,
+                },
             }
-        }
-        trace_result.append(trace_step)
-
-        trace_step = {
-            "in": {
-                "dpid": "00:00:00:00:00:00:00:03",
-                "port": 3,
-                "time": "2022-06-01 01:01:01.100000",
-                "type": "intermediary",
-                "vlan": 100,
-            },
-            "out": {
-                "port": 1,
-                "vlan": 123,
-            },
-        }
-        trace_result.append(trace_step)
+        ]
 
         result = utils._prepare_json(trace_result)
         expected = [
@@ -159,188 +155,169 @@ class TestUtils(TestCase):
 
         assert result == {"result": []}
 
-    def test_compare_endpoints1(self):
-        """Test for compare endpoinst for the first internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:02",
-        }
-
-        # Test endpoint1 dpid != endpoint2 dpid
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints2(self):
-        """Test for compare endpoinst for the second internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "out_port": 2,
-            "out_vlan": 200,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "in_vlan": 100,
-        }
-
-        # Test endpoint1 without in_port
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "in_vlan": 100,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "in_vlan": 100,
-        }
-
-        # Test endpoint2 without out_port
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "in_vlan": 100,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "out_port": 2,
-            "out_vlan": 200,
-        }
-
-        # Test endpoint1 in_port != endpoint2 out_port
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints3(self):
-        """Test for compare endpoinst for the third internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "out_port": 2,
-            "in_vlan": 100,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 2,
-            "out_port": 3,
-            "out_vlan": 200,
-        }
-
-        # Test endpoint1 in_vlan != endpoint2 out_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints4(self):
-        """Test for compare endpoinst for the first internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "out_port": 2,
-            "in_vlan": 100,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 2,
-            "out_port": 3,
-        }
-
-        # Test endpoint1 with in_vlan and endpoint2 without out_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "out_port": 2,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 2,
-            "out_port": 3,
-            "out_vlan": 200,
-        }
-
-        # Test endpoint1 without in_vlan and endpoint2 with out_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints5(self):
-        """Test for compare endpoinst for the fifth internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 3,
-            "out_port": 2,
-            "out_vlan": 200,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 2,
-            "out_port": 3,
-            "in_vlan": 100,
-        }
-
-        # Test endpoint1 out_vlan != endpoint2 in_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints6(self):
-        """Test for compare endpoinst for the fifth internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 3,
-            "out_port": 2,
-            "out_vlan": 200,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 2,
-            "out_port": 3,
-        }
-
-        # Test endpoint1 with out_vlan and endpoint2 without in_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 3,
-            "out_port": 2,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:01",
-            "in_port": 2,
-            "out_port": 3,
-            "in_vlan": 100,
-        }
-
-        # Test endpoint1 without out_vlan and endpoint2 with in_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert not result
-
-    def test_compare_endpoints(self):
-        """Test for compare endpoinst for the fifth internal conditional."""
-        endpoint1 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "in_port": 3,
-            "in_vlan": 100,
-        }
-        endpoint2 = {
-            "dpid": "00:00:00:00:00:00:00:03",
-            "out_port": 3,
-            "out_vlan": 100,
-        }
-
-        # Test endpoint1 out_vlan != endpoint2 in_vlan
-        result = utils._compare_endpoints(endpoint1, endpoint2)
-        assert result
+    @pytest.mark.parametrize(
+        "endpoint1,endpoint2,result",
+        [
+            (
+                {"dpid": "00:00:00:00:00:00:00:01"},
+                {"dpid": "00:00:00:00:00:00:00:02"},
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "out_port": 2,
+                    "out_vlan": 200,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "in_vlan": 100,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "in_vlan": 100,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "in_vlan": 100,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "in_vlan": 100,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "out_port": 2,
+                    "out_vlan": 200,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "out_port": 2,
+                    "in_vlan": 100,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 2,
+                    "out_port": 3,
+                    "out_vlan": 200,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "out_port": 2,
+                    "in_vlan": 100,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 2,
+                    "out_port": 3,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "out_port": 2,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 2,
+                    "out_port": 3,
+                    "out_vlan": 200,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 3,
+                    "out_port": 2,
+                    "out_vlan": 200,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 2,
+                    "out_port": 3,
+                    "in_vlan": 100,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 3,
+                    "out_port": 2,
+                    "out_vlan": 200,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 2,
+                    "out_port": 3,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 3,
+                    "out_port": 2,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 2,
+                    "out_port": 3,
+                    "in_vlan": 100,
+                },
+                False
+            ),
+            (
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "in_port": 3,
+                    "in_vlan": 100,
+                },
+                {
+                    "dpid": "00:00:00:00:00:00:00:03",
+                    "out_port": 3,
+                    "out_vlan": 100,
+                },
+                True
+            ),
+        ]
+    )
+    def test_compare_endpoints1(self, endpoint1, endpoint2, result):
+        """Test for compare endpoinst for the internal conditional no.
+        1 - first: Test endpoint1 dpid != endpoint2 dpid
+        2 - second: Test endpoint1 without in_port
+        3 - second: Test endpoint2 without out_port
+        4 - second: Test endpoint1 in_port != endpoint2 out_port
+        5 - third: Test endpoint1 in_vlan != endpoint2 out_vlan
+        6 - first: Test endpoint1 with in_vlan and endpoint2 without out_vlan
+        7 - first: Test endpoint1 without in_vlan and endpoint2 with out_vlan
+        8 - fifth: Test endpoint1 out_vlan != endpoint2 in_vlan
+        9 - fifth: Test endpoint1 with out_vlan and endpoint2 without in_vlan
+        10 - fifth: Test endpoint1 without out_vlan and endpoint2 with in_vlan
+        11 - fifth: Test endpoint1 out_vlan != endpoint2 in_vlan
+        """
+        assert utils._compare_endpoints(endpoint1, endpoint2) == result
 
     def test_find_endpoint_b(self):
         """Test find endpoint with interface equals link endpoint B."""
@@ -399,86 +376,40 @@ class TestUtils(TestCase):
         assert result[0] == 4096
         assert result[1] == 4096
 
-    def test_match_field_dl_vlan(self):
+    @pytest.mark.parametrize(
+        "value,field_flow,result",
+        [
+            (None, 0, True),
+            (None, 10, False),
+            (None, "4096/4096", False),
+            ([10], 0, False),
+            ([10], 10, True),
+            ([10], "4096/4096", True),
+            ([10], 11, False),
+            ([3], "5/1", True),
+            ([2], "5/1", False),
+        ]
+    )
+    def test_match_field_dl_vlan(self, value, field_flow, result):
         """Test match_field_dl_vlan"""
+        assert utils.match_field_dl_vlan(value, field_flow) == result
 
-        result = utils.match_field_dl_vlan(None, 0)
-        assert result
-        result = utils.match_field_dl_vlan(None, 10)
-        assert not result
-        result = utils.match_field_dl_vlan(None, "4096/4096")
-        assert not result
-        result = utils.match_field_dl_vlan([10], 0)
-        assert not result
-        result = utils.match_field_dl_vlan([10], 10)
-        assert result
-        result = utils.match_field_dl_vlan([10], "4096/4096")
-        assert result
-        result = utils.match_field_dl_vlan([10], 11)
-        assert not result
-        result = utils.match_field_dl_vlan([3], "5/1")
-        assert result
-        result = utils.match_field_dl_vlan([2], "5/1")
-        assert not result
-
-    def test_match_field_ip(self):
+    @pytest.mark.parametrize(
+        "field,field_flow,result",
+        [
+            ('192.168.20.21', '192.168.20.21', True),
+            ('192.168.20.21', '192.168.20.21/10', True),
+            ('192.168.20.21', '192.168.20.21/32', True),
+            ('192.168.20.21', '192.168.20.21/255.255.255.255', True),
+            ('192.168.20.30', '192.168.20.21', False),
+            ('192.200.20.30', '192.168.20.21/10', False),
+            ('2002:db8::8a3f:362:7897', '2002:db8::8a3f:362:7897', True),
+            ('2002:db8::8a3f:362:7897', '2002:db8::8a3f:362:7897/10', True),
+            ('2002:db8::8a3f:362:7897', '2002:db8::8a3f:362:7897/128', True),
+            ('2002:db8::8a3f:362:7', '2002:db8::8a3f:362:7897', False),
+            ('3002:db8::9a3f:362:7897', '2002:db8::8a3f:362:7897/10', False),
+        ],
+    )
+    def test_match_field_ip(self, field, field_flow, result):
         """Test match_field_ip"""
-        # IPv4 cases
-        result = utils.match_field_ip('192.168.20.21', '192.168.20.21')
-        assert result
-        result = utils.match_field_ip('192.168.20.21', '192.168.20.21/10')
-        assert result
-        result = utils.match_field_ip('192.168.20.21', '192.168.20.21/32')
-        assert result
-        result = utils.match_field_ip(
-                                        '192.168.20.21',
-                                        '192.168.20.21/255.255.255.255'
-                                    )
-        assert result
-        result = utils.match_field_ip('192.168.20.30', '192.168.20.21')
-        assert not result
-        result = utils.match_field_ip('192.200.20.30', '192.168.20.21/10')
-        assert not result
-
-        # IPv6 cases
-        result = utils.match_field_ip(
-                                        '2002:db8::8a3f:362:7897',
-                                        '2002:db8::8a3f:362:7897'
-                                    )
-        assert result
-        result = utils.match_field_ip(
-                                        '2002:db8::8a3f:362:7897',
-                                        '2002:db8::8a3f:362:7897/10'
-                                    )
-        assert result
-        result = utils.match_field_ip(
-                                        '2002:db8::8a3f:362:7897',
-                                        '2002:db8::8a3f:362:7897/128'
-                                    )
-        assert result
-        result = utils.match_field_ip(
-                                        '2002:db8::8a3f:362:7',
-                                        '2002:db8::8a3f:362:7897'
-                                    )
-        assert not result
-        result = utils.match_field_ip(
-                                        '3002:db8::9a3f:362:7897',
-                                        '2002:db8::8a3f:362:7897/10'
-                                    )
-        assert not result
-
-
-# pylint: disable=too-many-public-methods, too-many-lines
-class TestUtilsWithController(TestCase):
-    """Test utils.py."""
-
-    def setUp(self):
-        # The decorator run_on_thread is patched, so methods that listen
-        # for events do not run on threads while tested.
-        # Decorators have to be patched before the methods that are
-        # decorated with them are imported.
-        patch("kytos.core.helpers.run_on_thread", lambda x: x).start()
-
-        self.controller = get_controller_mock()
-
-        self.addCleanup(patch.stopall)
+        assert utils.match_field_ip(field, field_flow) == result
