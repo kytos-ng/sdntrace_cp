@@ -126,8 +126,8 @@ class Main(KytosNApp):
                     trace_step['in']['type'] = 'last'
                     do_trace = False
             else:
-                trace_step['in']['type'] = 'incomplete'
-                do_trace = False
+                # Incomplete
+                break
             if 'out' in trace_step and trace_step['out']:
                 if self.check_loop_trace_step(trace_step, trace_result):
                     do_trace = False
