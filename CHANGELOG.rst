@@ -13,7 +13,7 @@ Added
 
 Changed
 =======
-- Update ``tracepath`` to support the trace type: ``loop``. Other three types are ``starting`` for the first trace_step, ``intermediary`` for subsequent trace_steps (previously ``trace``), and ``last`` for the last trace_step representing successful trace.
+- Update ``tracepath`` to support the trace type: ``loop``. Other three types are ``starting`` for the first trace_step, ``intermediary`` for subsequent trace_steps (previously ``trace``), and ``last`` for a terminating last switch where a flow lookup matched.
 - Add new case of `loop` when the outgoing interface is the same as the input interface.
 - Remove ``last_id`` and ``traces`` parameters
 - Remove ``GET /api/amlight/sdntrace_cp/trace/{trace_id}`` in ``openapi.yml``
