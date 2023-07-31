@@ -1,4 +1,4 @@
-|Tag| |License| |Build| |Coverage| |Quality|
+|Tag| |License| |Build| |Coverage| |Quality| |Stable|
 
 .. raw:: html
 
