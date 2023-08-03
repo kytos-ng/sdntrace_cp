@@ -340,6 +340,58 @@ class TestMain:
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    async def test_trace_instructions(self, mock_stored_flows, event_loop):
+        """Test trace rest call with instructions."""
+        self.napp.controller.loop = event_loop
+        payload = {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    },
+                "eth": {"dl_vlan": 100},
+            }
+        }
+        stored_flows = {
+                "flow": {
+                    "table_id": 0,
+                    "cookie": 84114964,
+                    "hard_timeout": 0,
+                    "idle_timeout": 0,
+                    "priority": 10,
+                    "match": {"dl_vlan": 100, "in_port": 1},
+                    "instructions": [
+                        {
+                            "instruction_type": "apply_actions",
+                            "actions": [
+                                {"action_type": "push_vlan"},
+                                {"action_type": "set_vlan", "vlan_id": 200},
+                                {"action_type": "output", "port": 2}
+                            ]
+                        }
+                    ]
+                },
+                "flow_id": 1,
+                "state": "installed",
+                "switch": "00:00:00:00:00:00:00:01",
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
+        }
+
+        resp = await self.api_client.put(self.trace_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+
+        assert len(result) == 1
+        assert result[0]["dpid"] == "00:00:00:00:00:00:00:01"
+        assert result[0]["port"] == 1
+        assert result[0]["type"] == "last"
+        assert result[0]["vlan"] == 100
+        assert result[0]["out"] == {"port": 2, "vlan": 200}
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_trace_fail(self, mock_stored_flows, event_loop):
         """Test trace with a failed dependency."""
         self.napp.controller.loop = event_loop
