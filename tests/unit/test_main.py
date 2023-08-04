@@ -392,10 +392,9 @@ class TestMain:
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace_fail(self, mock_stored_flows, event_loop):
-        """Test trace with a failed dependency."""
+    async def test_instructions_no_match(self, mock_stored_flows, event_loop):
+        """Test a no match for trace rest call with instructions."""
         self.napp.controller.loop = event_loop
-        mock_stored_flows.side_effect = HTTPException(424, "failed")
         payload = {
             "trace": {
                 "switch": {
@@ -405,8 +404,37 @@ class TestMain:
                 "eth": {"dl_vlan": 100},
             }
         }
-        response = await self.api_client.put(self.trace_endpoint, json=payload)
-        assert response.status_code == 424
+        stored_flows = {
+                "flow": {
+                    "table_id": 0,
+                    "cookie": 84114964,
+                    "hard_timeout": 0,
+                    "idle_timeout": 0,
+                    "priority": 10,
+                    "match": {"dl_vlan": 100, "in_port": 1},
+                    "instructions": [
+                        {
+                            "instruction_type": "apply_actions",
+                            "actions": [
+                                {"action_type": "push_vlan"},
+                                {"action_type": "set_vlan", "vlan_id": 200}
+                            ]
+                        }
+                    ]
+                },
+                "flow_id": 1,
+                "state": "installed",
+                "switch": "00:00:00:00:00:00:00:01",
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [stored_flows]
+        }
+
+        resp = await self.api_client.put(self.trace_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+        assert result == []
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_get_traces(self, mock_stored_flows, event_loop):
