@@ -479,11 +479,7 @@ class TestMain:
         assert result[1][0]["vlan"] == 100
         assert result[1][0]["out"] is None
 
-        assert result[2][0]["dpid"] == "00:00:00:00:00:00:00:02"
-        assert result[2][0]["port"] == 2
-        assert result[2][0]["type"] == "incomplete"
-        assert result[2][0]["vlan"] == 100
-        assert result[2][0]["out"] is None
+        assert len(result[2]) == 0
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_traces_fail(self, mock_stored_flows, event_loop):
@@ -606,8 +602,8 @@ class TestMain:
         current_data = resp.json()
         result = current_data["result"]
         assert len(result) == 2
-        assert result[0][-1]['type'] == "incomplete"
-        assert result[1][-1]['type'] == "incomplete"
+        assert len(result[0]) == 0
+        assert len(result[1]) == 0
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_get_traces_untagged(self, mock_stored_flows, event_loop):
@@ -766,8 +762,7 @@ class TestMain:
         result = current_data["result"]
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 2}
-        assert result[1][0]["type"] == "incomplete"
-        assert result[1][0]["out"] is None
+        assert len(result[1]) == 0
 
         mock_stored_flows.return_value = {
             "00:00:00:00:00:00:00:01": [
@@ -784,8 +779,7 @@ class TestMain:
         result = current_data["result"]
         assert result[0][0]["type"] == "last"
         assert result[0][0]["out"] == {"port": 3}
-        assert result[1][0]["type"] == "incomplete"
-        assert result[1][0]["out"] is None
+        assert len(result[1]) == 0
 
     @pytest.mark.parametrize(
         "flow,args,match",
