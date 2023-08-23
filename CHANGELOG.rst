@@ -6,6 +6,10 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [UNRELEASED] - Under development
 ********************************
 
+Added
+=====
+- Support "instructions" to perform a match.
+
 [2023.1.0] - 2023-06-12
 ***********************
 
@@ -13,7 +17,6 @@ Added
 =====
 - Support ``"untagged"`` and ``"any"`` on EVCs.
 - ``PUT /trace and /traces`` endpoints validate payload with ``@validate_openapi``.
-- Support "instructions" to perform a match.
 
 Changed
 =======
