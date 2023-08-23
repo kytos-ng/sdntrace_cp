@@ -247,6 +247,7 @@ class Main(KytosNApp):
         return response
 
     # pylint: disable=redefined-outer-name
+    # pylint: disable=too-many-branches
     def match_and_apply(self, switch, args, stored_flows):
         # pylint: disable=bad-staticmethod-argument
         """Match flows and apply actions.
@@ -261,6 +262,10 @@ class Main(KytosNApp):
             return flow, args, port
         if 'actions' in flow['flow']:
             actions = flow['flow']['actions']
+        elif 'instructions' in flow['flow']:
+            for instruction in flow['flow']['instructions']:
+                if instruction['instruction_type'] == 'apply_actions':
+                    actions = instruction['actions']
         for action in actions:
             action_type = action['action_type']
             if action_type == 'output':
