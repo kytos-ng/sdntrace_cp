@@ -190,11 +190,17 @@ class Main(KytosNApp):
                 'entries': entries}
 
     @classmethod
-    def do_match(cls, flow, args):
+    def do_match(cls, flow, args, table_id):
         """Match a packet against this flow (OF1.3)."""
         # pylint: disable=consider-using-dict-items
         # pylint: disable=too-many-return-statements
         if ('match' not in flow['flow']) or (len(flow['flow']['match']) == 0):
+            return False
+        if 'table_id' in flow['flow']:
+            table_id_ = flow['flow']['table_id']
+        else:
+            table_id_ = 0
+        if table_id != table_id_:
             return False
         for name in flow['flow']['match']:
             field_flow = flow['flow']['match'][name]
@@ -215,8 +221,8 @@ class Main(KytosNApp):
                 return False
         return flow
 
-    def match_flows(self, switch, args, stored_flows, many=True):
-        # pylint: disable=bad-staticmethod-argument
+    # pylint: disable=too-many-arguments
+    def match_flows(self, switch, table_id, args, stored_flows, many=True):
         """
         Match the packet in request against the stored flows from flow_manager.
         Try the match with each flow, in other. If many is True, tries the
@@ -233,7 +239,7 @@ class Main(KytosNApp):
             return None
         try:
             for flow in stored_flows[switch.dpid]:
-                match = Main.do_match(flow, args)
+                match = Main.do_match(flow, args, table_id)
                 if match:
                     if many:
                         response.append(match)
@@ -246,26 +252,44 @@ class Main(KytosNApp):
             return None
         return response
 
-    # pylint: disable=redefined-outer-name
-    # pylint: disable=too-many-branches
+    def get_action(self, switch, table_id, args, stored_flows, actions):
+        """Get actions in the matched flow"""
+        goto_table = False
+        actions_ = []
+        flow = self.match_flows(switch, table_id, args, stored_flows, False)
+        if flow and 'actions' in flow['flow']:
+            actions_ = flow['flow']['actions']
+        elif flow and 'instructions' in flow['flow']:
+            for instruction in flow['flow']['instructions']:
+                if instruction['instruction_type'] == 'apply_actions':
+                    actions_ = instruction['actions']
+                elif instruction['instruction_type'] == 'goto_table':
+                    table_id_ = instruction['table_id']
+                    if table_id < table_id_:
+                        table_id = table_id_
+                        goto_table = True
+                    else:
+                        log.error(f"A packet can only been directed to a \
+                                  flow table number greather than {table_id}")
+        actions.extend(actions_)
+        return flow, actions, goto_table, table_id
+
     def match_and_apply(self, switch, args, stored_flows):
-        # pylint: disable=bad-staticmethod-argument
         """Match flows and apply actions.
         Match given packet (in args) against
         the stored flows (from flow_manager) and,
         if a match flow is found, apply its actions."""
-        flow = self.match_flows(switch, args, stored_flows, False)
+        table_id = 0
+        goto_table = True
         port = None
         actions = []
-        # pylint: disable=too-many-nested-blocks
+        while goto_table:
+            flow, actions, goto_table, table_id = \
+                self.get_action(switch, table_id, args, stored_flows, actions)
+
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
-        if 'actions' in flow['flow']:
-            actions = flow['flow']['actions']
-        elif 'instructions' in flow['flow']:
-            for instruction in flow['flow']['instructions']:
-                if instruction['instruction_type'] == 'apply_actions':
-                    actions = instruction['actions']
+
         for action in actions:
             action_type = action['action_type']
             if action_type == 'output':

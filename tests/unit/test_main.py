@@ -891,7 +891,7 @@ class TestMain:
                                     'ipv6_src': '2002:db8::8a3f:362:7897/10',
                                     'ipv6_dst': '2002:db8::8a3f:362:7897/128',
                                     }
-                          }
+                          },
                  },
                 {
                         'nw_src': '192.168.20.21',
@@ -932,7 +932,7 @@ class TestMain:
     )
     def test_do_match(self, flow, args, match):
         """Test do_match."""
-        assert self.napp.do_match(flow, args) == match
+        assert self.napp.do_match(flow, args, 0) == match
 
     def test_match_flows(self):
         """Test match_flows."""
@@ -940,11 +940,11 @@ class TestMain:
         switch = get_switch_mock("00:00:00:00:00:00:00:01")
         stored_flows = {"00:00:00:00:00:00:00:01": [flow]}
         args = {"dl_vlan": [10], "in_port": 1}
-        resp = self.napp.match_flows(switch, args, stored_flows)
+        resp = self.napp.match_flows(switch, 0, args, stored_flows)
         assert resp == [flow]
 
         stored_flows = {}
-        resp = self.napp.match_flows(switch, args, stored_flows)
+        resp = self.napp.match_flows(switch, 0, args, stored_flows)
         assert not resp
 
     @pytest.mark.parametrize(
@@ -1016,3 +1016,184 @@ class TestMain:
         resp = self.napp.match_and_apply(switch, args, stored_flows)
         assert not resp[0]
         assert not resp[2]
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    async def test_goto_table_1_switch(self, mock_stored_flows, event_loop):
+        """Test match_and_apply with goto_table"""
+        self.napp.controller.loop = event_loop
+
+        stored_flow1 = {
+            "flow": {
+                        "match": {
+                            "in_port": 1
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "goto_table",
+                                "table_id": 1
+                            }
+                        ]
+                    }
+        }
+        stored_flow2 = {
+            "flow": {
+                        "table_id": 1,
+                        "match": {
+                            "in_port": 1
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "apply_actions",
+                                "actions": [
+                                    {
+                                        "action_type": "output",
+                                        "port": 2
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+        }
+        stored_flow3 = {
+            "flow": {
+                        "match": {
+                            "in_port": 2
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "goto_table",
+                                "table_id": 2
+                            }
+                        ]
+                    }
+        }
+        stored_flow4 = {
+            "flow": {
+                        "table_id": 2,
+                        "match": {
+                            "in_port": 2
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "apply_actions",
+                                "actions": [
+                                    {
+                                        "action_type": "output",
+                                        "port": 1
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow2,
+                stored_flow4,
+                stored_flow3
+            ]
+        }
+
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    }
+            }
+        }, {
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 2
+                    }
+            }
+        }
+        ]
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+        result_t1 = result[0]
+        assert result_t1[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_t1[0]['port'] == 1
+        assert result_t1[0]['type'] == 'last'
+        assert result_t1[0]['out']['port'] == 2
+
+        result_t1 = result[1]
+        assert result_t1[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_t1[0]['port'] == 2
+        assert result_t1[0]['type'] == 'last'
+        assert result_t1[0]['out']['port'] == 1
+
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow4
+            ]
+        }
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+
+        assert len(result[0]) == 0
+        assert len(result[1]) == 0
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    async def test_fail_wrong_goto_table(self, mock_stored_flows, event_loop):
+        """Test match_and_apply with goto_table"""
+        self.napp.controller.loop = event_loop
+
+        stored_flow1 = {
+            "flow": {
+                        "match": {
+                            "in_port": 1
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "goto_table",
+                                "table_id": 2
+                            }
+                        ]
+                    }
+        }
+        stored_flow2 = {
+            "flow": {
+                        "table_id": 2,
+                        "match": {
+                            "in_port": 1
+                        },
+                        "instructions": [
+                            {
+                                "instruction_type": "goto_table",
+                                "table_id": 1
+                            }
+                        ]
+                    }
+        }
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                stored_flow1,
+                stored_flow2
+            ]
+        }
+
+        payload = [{
+            "trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 1
+                    }
+            }
+        }
+        ]
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+        assert len(result[0]) == 0
