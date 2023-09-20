@@ -196,10 +196,7 @@ class Main(KytosNApp):
         # pylint: disable=too-many-return-statements
         if ('match' not in flow['flow']) or (len(flow['flow']['match']) == 0):
             return False
-        if 'table_id' in flow['flow']:
-            table_id_ = flow['flow']['table_id']
-        else:
-            table_id_ = 0
+        table_id_ = flow['flow'].get('table_id', 0)
         if table_id != table_id_:
             return False
         for name in flow['flow']['match']:
@@ -252,8 +249,8 @@ class Main(KytosNApp):
             return None
         return response
 
-    def get_action(self, switch, table_id, args, stored_flows, actions):
-        """Get actions in the matched flow"""
+    def process_tables(self, switch, table_id, args, stored_flows, actions):
+        """Resolve the table context and get actions in the matched flow"""
         goto_table = False
         actions_ = []
         flow = self.match_flows(switch, table_id, args, stored_flows, False)
@@ -271,6 +268,7 @@ class Main(KytosNApp):
                     else:
                         log.error(f"A packet can only been directed to a \
                                   flow table number greather than {table_id}")
+                        raise ValueError('Wrong table_id')
         actions.extend(actions_)
         return flow, actions, goto_table, table_id
 
@@ -284,9 +282,8 @@ class Main(KytosNApp):
         port = None
         actions = []
         while goto_table:
-            flow, actions, goto_table, table_id = \
-                self.get_action(switch, table_id, args, stored_flows, actions)
-
+            flow, actions, goto_table, table_id = self.process_tables(
+                    switch, table_id, args, stored_flows, actions)
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
 

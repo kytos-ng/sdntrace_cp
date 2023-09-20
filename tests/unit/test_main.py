@@ -1191,9 +1191,6 @@ class TestMain:
             }
         }
         ]
-
-        resp = await self.api_client.put(self.traces_endpoint, json=payload)
-        assert resp.status_code == 200
-        current_data = resp.json()
-        result = current_data["result"]
-        assert len(result[0]) == 0
+        with pytest.raises(ValueError) as err:
+            await self.api_client.put(self.traces_endpoint, json=payload)
+        assert 'Wrong table_id' in str(err.value)
