@@ -1194,3 +1194,404 @@ class TestMain:
         with pytest.raises(ValueError) as err:
             await self.api_client.put(self.traces_endpoint, json=payload)
         assert 'Wrong table_id' in str(err.value)
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    async def test_trace_goto_table_intra(self, mock_stored_flows, event_loop):
+        """Test trace rest call."""
+        self.napp.controller.loop = event_loop
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                {"flow": {
+                    "match": {
+                        "in_port": 15,
+                        "dl_vlan": 201
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "push_int"
+                        }]
+                        }, {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20100,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 16,
+                        "dl_vlan": 200
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "push_int"
+                        }]
+                        }, {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20100,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 15,
+                        "dl_vlan": 201
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "add_int_metadata"
+                        }, {
+                            "action_type": "output",
+                            "port": 19
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }},
+                {"flow": {
+                    "match": {
+                        "in_port": 16,
+                        "dl_vlan": 200
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "add_int_metadata"
+                        }, {
+                            "action_type": "output",
+                            "port": 17
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 20,
+                        "dl_vlan": 201
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "send_report"
+                        }]},
+                        {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20000,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 20,
+                        "dl_vlan": 201
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "pop_int"
+                        }, {
+                            "action_type": "set_vlan",
+                            "vlan_id": 200
+                        }, {
+                            "action_type": "output",
+                            "port": 16
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }, },
+                ]}
+        payload = [
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 15
+                    },
+                "eth": {"dl_vlan": 201}
+                }},
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 16
+                    },
+                "eth": {"dl_vlan": 200}
+                }},
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 20
+                    },
+                "eth": {"dl_vlan": 201}
+                }}
+        ]
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+
+        result_ = result[0]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_[0]['port'] == 15
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 201
+        assert result_[0]['out']['port'] == 19
+        assert result_[0]['out']['vlan'] == 201
+
+        result_ = result[1]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_[0]['port'] == 16
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 200
+        assert result_[0]['out']['port'] == 17
+        assert result_[0]['out']['vlan'] == 200
+
+        result_ = result[2]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_[0]['port'] == 20
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 201
+        assert result_[0]['out']['port'] == 16
+        assert result_[0]['out']['vlan'] == 200
+
+    @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
+    async def test_trace_goto_table_inter(self, mock_stored_flows, event_loop):
+        """Test trace rest call."""
+        self.napp.controller.loop = event_loop
+        mock_stored_flows.return_value = {
+            "00:00:00:00:00:00:00:01": [
+                {"flow": {
+                    "match": {
+                        "in_port": 15,
+                        "dl_vlan": 100
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "push_int"
+                        }]
+                        }, {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20100,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 15,
+                        "dl_vlan": 100
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "add_int_metadata"
+                        }, {
+                            "action_type": "set_vlan",
+                            "vlan_id": 100
+                        }, {
+                            "action_type": "push_vlan",
+                            "tag_type": "s"
+                        }, {
+                            "action_type": "set_vlan",
+                            "vlan_id": 1
+                        }, {
+                            "action_type": "output",
+                            "port": 11
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }}
+            ],
+            "00:00:00:00:00:00:00:02": [
+                {"flow": {
+                    "match": {
+                        "in_port": 22,
+                        "dl_vlan": 100
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "push_int"
+                        }]
+                        }, {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20100,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 11,
+                        "dl_vlan": 1
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "add_int_metadata"
+                        }, {
+                            "action_type": "output",
+                            "port": 25
+                        }]}
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20100,
+                    }},
+                {"flow": {
+                    "match": {
+                        "in_port": 22,
+                        "dl_vlan": 100
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "add_int_metadata"
+                        }, {
+                            "action_type": "set_vlan",
+                            "vlan_id": 100
+                        }, {
+                            "action_type": "push_vlan",
+                            "tag_type": "s"
+                        }, {
+                            "action_type": "set_vlan",
+                            "vlan_id": 1
+                        }, {
+                            "action_type": "output",
+                            "port": 11
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }},
+                {"flow": {
+                    "match": {
+                        "in_port": 26,
+                        "dl_vlan": 1
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "send_report"
+                        }]},
+                        {
+                            "instruction_type": "goto_table",
+                            "table_id": 2
+                        }
+                    ],
+                    "table_id": 0,
+                    "table_group": "evpl",
+                    "priority": 20000,
+                    }, },
+                {"flow": {
+                    "match": {
+                        "in_port": 26,
+                        "dl_vlan": 1
+                        },
+                    "instructions": [{
+                        "instruction_type": "apply_actions",
+                        "actions": [{
+                            "action_type": "pop_int"
+                        }, {
+                            "action_type": "pop_vlan"
+                        }, {
+                            "action_type": "output",
+                            "port": 22
+                        }]}
+                    ],
+                    "table_id": 2,
+                    "table_group": "base",
+                    "priority": 20000,
+                    }, }
+            ]
+        }
+
+        payload = [
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:01",
+                    "in_port": 15
+                    },
+                "eth": {"dl_vlan": 100}
+                }},
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:02",
+                    "in_port": 22
+                    },
+                "eth": {"dl_vlan": 100}
+                }},
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:02",
+                    "in_port": 11
+                    },
+                "eth": {"dl_vlan": 1}
+                }},
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:02",
+                    "in_port": 26
+                    },
+                "eth": {"dl_vlan": 1}
+                }}
+        ]
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        current_data = resp.json()
+        result = current_data["result"]
+
+        result_ = result[0]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result_[0]['port'] == 15
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 100
+        assert result_[0]['out']['port'] == 11
+        assert result_[0]['out']['vlan'] == 1
+
+        result_ = result[1]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:02'
+        assert result_[0]['port'] == 22
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 100
+        assert result_[0]['out']['port'] == 11
+        assert result_[0]['out']['vlan'] == 1
+
+        result_ = result[2]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:02'
+        assert result_[0]['port'] == 11
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 1
+        assert result_[0]['out']['port'] == 25
+        assert result_[0]['out']['vlan'] == 1
+
+        result_ = result[3]
+        assert result_[0]['dpid'] == '00:00:00:00:00:00:00:02'
+        assert result_[0]['port'] == 26
+        assert result_[0]['type'] == 'last'
+        assert result_[0]['vlan'] == 1
+        assert result_[0]['out']['port'] == 22

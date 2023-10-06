@@ -266,9 +266,11 @@ class Main(KytosNApp):
                         table_id = table_id_
                         goto_table = True
                     else:
-                        log.error(f"A packet can only been directed to a \
-                                  flow table number greather than {table_id}")
-                        raise ValueError('Wrong table_id')
+                        msg = f"Wrong table_id: \
+                            A packet can only been directed to a \
+                                flow table number greather than {table_id}"
+                        log.error(msg)
+                        raise ValueError(msg) from ValueError
         actions.extend(actions_)
         return flow, actions, goto_table, table_id
 
@@ -282,8 +284,11 @@ class Main(KytosNApp):
         port = None
         actions = []
         while goto_table:
-            flow, actions, goto_table, table_id = self.process_tables(
+            try:
+                flow, actions, goto_table, table_id = self.process_tables(
                     switch, table_id, args, stored_flows, actions)
+            except ValueError as exception:
+                raise exception
         if not flow or switch.ofp_version != '0x04':
             return flow, args, port
 

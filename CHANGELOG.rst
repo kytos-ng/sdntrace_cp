@@ -9,6 +9,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Added
 =====
 - Support "instructions" to perform a match.
+- Support instruction type `goto_table`.
 
 [2023.1.0] - 2023-06-12
 ***********************
