@@ -64,7 +64,11 @@ class Main(KytosNApp):
             stored_flows = get_stored_flows()
         except tenacity.RetryError as exc:
             raise HTTPException(424, "It couldn't get stored_flows") from exc
-        result = self.tracepath(entries, stored_flows)
+        try:
+            result = self.tracepath(entries, stored_flows)
+        except ValueError as exception:
+            log.debug("tracepath error {exception}")
+            raise exception
         return JSONResponse(prepare_json(result))
 
     @rest('/v1/traces', methods=['PUT'])
@@ -79,7 +83,11 @@ class Main(KytosNApp):
         except tenacity.RetryError as exc:
             raise HTTPException(424, "It couldn't get stored_flows") from exc
         for entry in entries:
-            results.append(self.tracepath(entry, stored_flows))
+            try:
+                results.append(self.tracepath(entry, stored_flows))
+            except ValueError as exception:
+                log.debug("tracepath error {exception}")
+                raise exception
         return JSONResponse(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):
@@ -266,10 +274,9 @@ class Main(KytosNApp):
                         table_id = table_id_
                         goto_table = True
                     else:
-                        msg = f"Wrong table_id: \
-                            A packet can only been directed to a \
+                        msg = f"Wrong table_id in {flow['flow']}: \
+                            The packet can only been directed to a \
                                 flow table number greather than {table_id}"
-                        log.error(msg)
                         raise ValueError(msg) from ValueError
         actions.extend(actions_)
         return flow, actions, goto_table, table_id
