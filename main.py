@@ -66,9 +66,9 @@ class Main(KytosNApp):
             raise HTTPException(424, "It couldn't get stored_flows") from exc
         try:
             result = self.tracepath(entries, stored_flows)
-        except ValueError as exception:
-            log.debug("tracepath error {exception}")
-            raise exception
+        except ValueError as exc:
+            log.debug("tracepath error {exc}")
+            raise HTTPException(409, str(exc)) from exc
         return JSONResponse(prepare_json(result))
 
     @rest('/v1/traces', methods=['PUT'])
@@ -85,9 +85,9 @@ class Main(KytosNApp):
         for entry in entries:
             try:
                 results.append(self.tracepath(entry, stored_flows))
-            except ValueError as exception:
-                log.debug("tracepath error {exception}")
-                raise exception
+            except ValueError as exc:
+                log.debug("tracepath error {exc}")
+                raise HTTPException(409, str(exc)) from exc
         return JSONResponse(prepare_json(results))
 
     def tracepath(self, entries, stored_flows):

@@ -1191,24 +1191,25 @@ class TestMain:
             }
         }
         ]
-        with pytest.raises(ValueError) as err:
-            await self.api_client.put(self.traces_endpoint, json=payload)
-        assert 'Wrong table_id' in str(err.value)
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 409
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_trace_goto_table_intra(self, mock_stored_flows, event_loop):
-        """Test trace rest call."""
+        """Test trace rest call.
+            Topology:
+                switches: {s1}
+                links:{
+                    s1-eth17 -- s1-eth18,
+                    s1-eth19 -- s1-eth20
+                }
+        """
         self.napp.controller.loop = event_loop
 
         switch = self.napp.controller.switches["00:00:00:00:00:00:00:01"]
 
         mock_interface = Interface("interface A", 1, MagicMock())
-        mock_interface.address = "00:00:00:00:00:00:00:01"
-
-        iface1 = get_interface_mock(
-            "", 1, get_switch_mock("00:00:00:00:00:00:00:01")
-        )
-        mock_interface.link = get_link_mock(iface1, iface1)
 
         mock_stored_flows.return_value = {
             "00:00:00:00:00:00:00:01": [
@@ -1376,8 +1377,10 @@ class TestMain:
                 "eth": {"dl_vlan": 201}
                 }}
         ]
-        mock_interface.link.endpoint_a.port_number = 19
-        mock_interface.link.endpoint_b.port_number = 20
+
+        iface1 = get_interface_mock("s1-eth11", 19, switch)
+        iface2 = get_interface_mock("s1-eth11", 20, switch)
+        mock_interface.link = get_link_mock(iface2, iface1)
 
         switch.get_interface_by_port_no.return_value = mock_interface
 
@@ -1403,8 +1406,9 @@ class TestMain:
                 }}
         ]
 
-        mock_interface.link.endpoint_a.port_number = 17
-        mock_interface.link.endpoint_b.port_number = 18
+        iface1 = get_interface_mock("s1-eth11", 17, switch)
+        iface2 = get_interface_mock("s1-eth11", 18, switch)
+        mock_interface.link = get_link_mock(iface2, iface1)
 
         switch.get_interface_by_port_no.return_value = mock_interface
 
@@ -1421,26 +1425,25 @@ class TestMain:
         assert result[1]['out']['port'] == 15
         assert result[1]['out']['vlan'] == 201
 
+    # pylint: disable=too-many-statements
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
     async def test_trace_goto_table_inter(self, mock_stored_flows, event_loop):
-        """Test trace rest call."""
+        """Test trace rest call.
+            Topology:
+                switches: {s1, s2}
+                links:{
+                    s1-eth17 -- s1-eth18,
+                    s1-eth11 -- s2-eth11,
+                    s2-eth25 -- s2-eth26
+                }
+        """
         self.napp.controller.loop = event_loop
 
         switch1 = self.napp.controller.switches["00:00:00:00:00:00:00:01"]
         switch2 = self.napp.controller.switches["00:00:00:00:00:00:00:02"]
 
-        mock_interface12 = Interface("interface A", 1, MagicMock())
-        mock_interface22 = Interface("interface B", 1, MagicMock())
-
-        iface1 = get_interface_mock("", 11, switch1)
-        iface2 = get_interface_mock("", 11, switch2)
-        iface3 = get_interface_mock("", 25, switch2)
-        iface4 = get_interface_mock("", 26, switch2)
-        mock_interface12.link = get_link_mock(iface2, iface1)
-        mock_interface22.link = get_link_mock(iface4, iface3)
-
-        switch1.get_interface_by_port_no.return_value = mock_interface12
-        switch2.get_interface_by_port_no.return_value = mock_interface22
+        mock_interface1 = Interface("interface A", 1, MagicMock())
+        mock_interface2 = Interface("interface B", 1, MagicMock())
 
         mock_stored_flows.return_value = {
             "00:00:00:00:00:00:00:01": [
@@ -1655,6 +1658,16 @@ class TestMain:
             ]
         }
 
+        iface1 = get_interface_mock("s1-eth11", 11, switch1)
+        iface2 = get_interface_mock("s2-eth11", 11, switch2)
+        iface3 = get_interface_mock("s2-eth25", 25, switch2)
+        iface4 = get_interface_mock("s2-eth26", 26, switch2)
+        mock_interface1.link = get_link_mock(iface2, iface1)
+        mock_interface2.link = get_link_mock(iface4, iface3)
+
+        switch1.get_interface_by_port_no.return_value = mock_interface1
+        switch2.get_interface_by_port_no.return_value = mock_interface2
+
         payload = [
             {"trace": {
                 "switch": {
@@ -1667,8 +1680,7 @@ class TestMain:
 
         resp = await self.api_client.put(self.traces_endpoint, json=payload)
         assert resp.status_code == 200
-        current_data = resp.json()
-        result = current_data["result"][0]
+        result = resp.json()["result"][0]
 
         assert result[0]['dpid'] == '00:00:00:00:00:00:00:01'
         assert result[0]['port'] == 15
@@ -1682,4 +1694,40 @@ class TestMain:
         assert result[2]['port'] == 26
         assert result[2]['vlan'] == 1
         assert result[2]['out']['port'] == 22
+        assert result[2]['out']['vlan'] == 100
+
+        iface3 = get_interface_mock("s1-eth17", 17, switch1)
+        iface4 = get_interface_mock("s1-eth18", 18, switch1)
+        mock_interface1.link = get_link_mock(iface1, iface2)
+        mock_interface2.link = get_link_mock(iface4, iface3)
+
+        switch1.get_interface_by_port_no.return_value = mock_interface2
+        switch2.get_interface_by_port_no.return_value = mock_interface1
+
+        payload = [
+            {"trace": {
+                "switch": {
+                    "dpid": "00:00:00:00:00:00:00:02",
+                    "in_port": 22
+                    },
+                "eth": {"dl_vlan": 100}
+                }}
+        ]
+
+        resp = await self.api_client.put(self.traces_endpoint, json=payload)
+        assert resp.status_code == 200
+        result = resp.json()["result"][0]
+
+        assert result[0]['dpid'] == '00:00:00:00:00:00:00:02'
+        assert result[0]['port'] == 22
+        assert result[0]['vlan'] == 100
+
+        assert result[1]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result[1]['port'] == 11
+        assert result[1]['vlan'] == 1
+
+        assert result[2]['dpid'] == '00:00:00:00:00:00:00:01'
+        assert result[2]['port'] == 18
+        assert result[2]['vlan'] == 1
+        assert result[2]['out']['port'] == 15
         assert result[2]['out']['vlan'] == 100
