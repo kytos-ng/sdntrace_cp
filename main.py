@@ -67,7 +67,6 @@ class Main(KytosNApp):
         try:
             result = self.tracepath(entries, stored_flows)
         except ValueError as exc:
-            log.debug("tracepath error {exc}")
             raise HTTPException(409, str(exc)) from exc
         return JSONResponse(prepare_json(result))
 
@@ -86,7 +85,6 @@ class Main(KytosNApp):
             try:
                 results.append(self.tracepath(entry, stored_flows))
             except ValueError as exc:
-                log.debug("tracepath error {exc}")
                 raise HTTPException(409, str(exc)) from exc
         return JSONResponse(prepare_json(results))
 
