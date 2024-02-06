@@ -28,7 +28,7 @@
           </k-accordion-item>
 
           <k-accordion-item title="Eth Parameters">
-            <k-input icon="arrow-right" title="dl_vlan:" tooltip="dl_vlan" placeholder="dl_vlan" :value.sync="eth.dl_vlan">{{ eth.dl_vlan }}</k-input>
+            <k-input icon="arrow-right" title="dl_vlan:" placeholder="dl_vlan" :value.sync="eth.dl_vlan">{{ eth.dl_vlan }}</k-input>
             <k-input icon="arrow-right" title="dl_type:" placeholder="dl_type" :value.sync="eth.dl_type">{{ eth.dl_type }}</k-input>
             <k-input icon="arrow-right" title="dl_src:" placeholder="dl_src" :value.sync="eth.dl_src">{{ eth.dl_src }}</k-input>
             <k-input icon="arrow-right" title="dl_dst:" placeholder="dl_dst" :value.sync="eth.dl_dst" >{{ eth.dl_dst }}</k-input>
