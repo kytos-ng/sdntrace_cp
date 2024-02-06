@@ -11,7 +11,7 @@ Added
 - Support "instructions" to perform a match.
 - Support instruction type `goto_table`.
 
-[2024.2.0] - 2024-02-6
+[2024.2.0] - 2024-02-06
 ***********************
 
 Added
