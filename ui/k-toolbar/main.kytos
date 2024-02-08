@@ -273,4 +273,12 @@ module.exports = {
         }
     }   
 </script>
-
+<style>
+  .autocomplete-result-list li {
+    white-space: nowrap;
+    margin-right: 100% !important;
+    outline: 0;
+    border: 1px #515151 solid;
+    border-radius: 3px;
+  }
+</style>
