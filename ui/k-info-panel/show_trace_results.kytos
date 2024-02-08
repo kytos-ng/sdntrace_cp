@@ -52,12 +52,6 @@
           this.trace_results = this.content.result
         } else {
           this.is_empty = true
-          let notification = {
-            icon: 'gear',
-            title: 'Empty Result',
-            description: 'Verify Data'
-          }
-          this.$kytos.$emit("setNotification", notification)
         }
       }
     } 
