@@ -1,7 +1,7 @@
 <template>
   <k-accordion>
     <k-accordion-item title="Trace Results">
-      <k-context-panel v-if="is_empty" title="Empty Result: Verify Inputs" icon="gear">
+      <k-context-panel v-if="is_empty" title="Empty Result" icon="gear">
         </k-context-panel>
           <div v-else class="data_table">
             <table>
