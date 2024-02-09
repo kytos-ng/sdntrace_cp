@@ -14,6 +14,9 @@
                       @blur="onblur_dpids"
                       >{{ dpid }}</k-input-auto>
 
+            <k-input class="k-input interface-label" :value.sync="dpid_display" icon="none"
+                      >{{ dpid_display }}</k-input>
+
             <k-input-auto id="in_port" :value.sync="in_port"
                       title="Port:"
                       placeholder="Port" icon="arrow-right"
@@ -22,8 +25,8 @@
                       @blur="onblur_ports"
                       >{{ in_port }}</k-input-auto>
 
-            <k-input class="k-input interface-label" :value.sync="interface_name" icon="none"
-                      >{{ interface_name }}</k-input>
+            <k-input class="k-input interface-label" :value.sync="port_name" icon="none"
+                      >{{ port_name }}</k-input>
 
           </k-accordion-item>
 
@@ -193,16 +196,20 @@ module.exports = {
     },
     computed: {
       get_dpids(){
-      var dpids = []
-      $.each(this.switches, function(key, value){
-          description = value.dpid
-          if (value.metadata.nodename != undefined && value.metadata.nodename != "") {
+        console.log(this.switches)
+        var dpids = []
+        $.each(this.switches, function(key, value){
+          console.log(value)
+          console.log(value.data_path)
+          if (value.metadata.node_name != undefined && value.metadata.node_name != "") {
             dpids.push(`${value.metadata.node_name} - ${value.dpid}`)
+          } else if (value.data_path != "None") {
+            dpids.push(`${value.data_path} - ${value.dpid}`)
           } else {
             dpids.push(value.dpid)
           }
-      });
-      this.dpids = dpids; 
+        });
+        this.dpids = dpids; 
       },
       get_ports(){
         current_dpid = this.dpid
@@ -210,8 +217,8 @@ module.exports = {
         var port_numbers = []
         if (current_switch != undefined && current_switch != "") {
           $.each(current_switch.interfaces, function(key, value) {
-            if (value.metadata.interface_name != undefined && value.metadata.interface_name != "") {
-              port_numbers.push(`${value.metadata.interface_name} - ${value.port_number}`)
+            if (value.metadata.port_name != undefined && value.metadata.port_name != "") {
+              port_numbers.push(`${value.metadata.port_name} - ${value.port_number}`)
             } else {
               port_numbers.push(`${value.name} - ${value.port_number}`)
             }
@@ -224,10 +231,13 @@ module.exports = {
       onblur_dpids(){
         let current_dpid = this.dpid
         if (current_dpid.lastIndexOf(' ') > 0) {
+          this.dpid_display = current_dpid
           let splitted_dpid = current_dpid.split(' ')
           this.dpid = splitted_dpid[splitted_dpid.length - 1]
+          let current_switch = this.switches[this.dpid]
         }
-        this.interface_name = ""
+        this.dpid_display = current_dpid
+        this.port_name = ""
         this.in_port = ""
       },
       onblur_ports(){
@@ -235,7 +245,7 @@ module.exports = {
         if (current_port.lastIndexOf(' ') > 0) {
           let splitted_port = current_port.split(' ')
           this.in_port = splitted_port[splitted_port.length-1]
-          this.interface_name = splitted_port[0]
+          this.port_name = splitted_port[0]
         }
       }
     },
@@ -250,7 +260,8 @@ module.exports = {
             dpids: [],
             in_port: "",
             port_numbers: [],
-            interface_name: "",
+            port_name: "",
+            dpid_display: "",
             eth: {
               "dl_vlan": "",
               "dl_type": "",
