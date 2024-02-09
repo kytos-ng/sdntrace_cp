@@ -196,11 +196,8 @@ module.exports = {
     },
     computed: {
       get_dpids(){
-        console.log(this.switches)
         var dpids = []
         $.each(this.switches, function(key, value){
-          console.log(value)
-          console.log(value.data_path)
           if (value.metadata.node_name != undefined && value.metadata.node_name != "") {
             dpids.push(`${value.metadata.node_name} - ${value.dpid}`)
           } else if (value.data_path != "None") {
