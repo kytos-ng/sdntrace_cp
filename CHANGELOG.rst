@@ -10,6 +10,7 @@ Added
 =====
 - Support "instructions" to perform a match.
 - Support instruction type `goto_table`.
+- Added UI to sdntrace_cp.
 
 [2023.1.0] - 2023-06-12
 ***********************

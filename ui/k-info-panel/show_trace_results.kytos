@@ -1,0 +1,125 @@
+<template>
+  <div class="sdntrace_container">
+    <k-accordion>
+      <k-accordion-item title="Trace Results">
+        <k-context-panel v-if="is_empty" title="Empty Result" icon="gear">
+          </k-context-panel>
+            <div v-else class="data_table">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Trace</th>
+                    <th rowspan="2">DPID</th>
+                    <th rowspan="2">Time</th>
+                    <th rowspan="2">Type</th>
+                    <th rowspan="1" colspan="2">Input</th>
+                    <th rowspan="1" colspan="2">Output</th>
+                  </tr>
+                  <tr>
+                    <th>Port</th>
+                    <th>Vlan</th>
+                    <th>Port</th>
+                    <th>Vlan</th>                   
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in trace_results">
+                    <td>{{index}}</td>
+                    <td>{{item.dpid}}</td>
+                    <td>{{item.time}}</td>
+                    <td>{{item.type}}</td>
+                    <td>{{item.port}}</td>
+                    <td>{{item.vlan}}</td>
+                    <td>{{item.out.port}}</td>
+                    <td>{{item.out.vlan}}</td>                  
+                  </tr>
+                </tbody>             
+            </table>
+          </div>
+        </k-accordion-item>
+    </k-accordion>
+  </div>
+</template>
+
+<script>
+ module.exports = {
+   props: ["content"],
+   methods: {
+    get_data(){
+      if (this.content != undefined && this.content != "")
+      {
+        if (this.content.result != "")
+        {
+          this.is_empty = false
+          this.trace_results = this.content.result
+        } else {
+          this.is_empty = true
+        }
+      }
+    } 
+   },
+   watch: {
+      content: function() {
+        this.get_data();
+      }
+  },
+  created() {
+    this.get_data();
+    $('.k-info-panel:has(.sdntrace_container)').addClass('sdntrace-k-info-panel');
+  },
+  mounted() {
+    this.$parent.$el.style.width = "calc(100% - 300px)";
+  },
+  destroyed() {
+    $('.k-info-panel').removeClass('sdntrace_container-k-info-panel');
+  },
+   data () {
+     return {
+      trace_results: {},
+      is_empty: false
+     }
+   }
+ }
+</script>
+<style>
+.sdntrace-k-info-panel {
+  width: calc(100% - 300px);
+}
+.data_table {
+  color: #ccc;
+  max-height: 250px;
+  text-align: center;
+  margin: 0 auto;
+  display: block;
+  padding: 0.5em 0 1em 0.3em;
+  font-size: 0.8em;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.data_table table{
+  display: table;
+  width: 100%;
+}
+.data_table thead{
+  font-weight: bold;
+  background: #554077;
+}
+.data_table th{
+  padding: 0.6em 0 0.6em 0;
+  vertical-align: middle;
+  border: 1px solid;
+}
+.data_table td{
+  vertical-align: middle;
+  padding: 0.45em 0 0.45em 0;
+  word-break: break-all;
+  border: 1px solid;
+}
+.data_table tbody tr:nth-child(even) {
+  background: #313131;
+}
+.data_table tbody tr:hover {
+    color: #eee;
+    background-color: #666;
+    }
+</style>

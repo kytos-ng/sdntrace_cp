@@ -1,0 +1,292 @@
+<template>
+  <k-toolbar-item icon="search-location" tooltip="Napp sdntrace_cp">
+    <div class="scroll">
+      <k-accordion>
+        <k-accordion-item title="Trace">
+
+          <k-accordion-item title="Required Switch Parameters">
+
+            <k-input-auto id="dpid" :value.sync="dpid"
+                      title="DPID:"
+                      placeholder="DPID" icon="arrow-right"
+                      :candidates="dpids" 
+                      @focus="get_dpids"
+                      @blur="onblur_dpids"
+                      >{{ dpid }}</k-input-auto>
+
+            <k-input class="k-input interface-label" :value.sync="dpid_display" icon="none"
+                      >{{ dpid_display }}</k-input>
+
+            <k-input-auto id="in_port" :value.sync="in_port"
+                      title="Port:"
+                      placeholder="Port" icon="arrow-right"
+                      :candidates="port_numbers" 
+                      @focus="get_ports"
+                      @blur="onblur_ports"
+                      >{{ in_port }}</k-input-auto>
+
+            <k-input class="k-input interface-label" :value.sync="port_name" icon="none"
+                      >{{ port_name }}</k-input>
+
+          </k-accordion-item>
+
+          <k-accordion-item title="Eth Parameters">
+            <k-input icon="arrow-right" title="dl_vlan:" placeholder="dl_vlan" :value.sync="eth.dl_vlan">{{ eth.dl_vlan }}</k-input>
+            <k-input icon="arrow-right" title="dl_type:" placeholder="dl_type" :value.sync="eth.dl_type">{{ eth.dl_type }}</k-input>
+            <k-input icon="arrow-right" title="dl_src:" placeholder="dl_src" :value.sync="eth.dl_src">{{ eth.dl_src }}</k-input>
+            <k-input icon="arrow-right" title="dl_dst:" placeholder="dl_dst" :value.sync="eth.dl_dst" >{{ eth.dl_dst }}</k-input>
+          </k-accordion-item>
+
+          <k-accordion-item title="IP Parameters">
+            <k-accordion>
+            <k-accordion-item title="IPV4">
+            <k-input icon="arrow-right" title="nw_src:" placeholder="nw_src" :value.sync="ip.nw_src">{{ ip.nw_src }}</k-input>
+            <k-input icon="arrow-right" title="nw_dst:" placeholder="nw_dst" :value.sync="ip.nw_dst">{{ ip.nw_dst }}</k-input>
+            </k-accordion-item>
+            <k-accordion-item title="IPV6">
+            <k-input icon="arrow-right" title="ipv6_src:" placeholder="ipv6_src" :value.sync="ip.ipv6_src">{{ ip.ipv6_src }}</k-input>
+            <k-input icon="arrow-right" title="ipv6_dst:" placeholder="ipv6_dst" :value.sync="ip.ipv6_dst">{{ ip.ipv6_dst }}</k-input>
+            </k-accordion-item>
+            <k-accordion>
+            <k-input icon="arrow-right" title="nw_proto:" placeholder="nw_proto" :value.sync="ip.nw_proto">{{ ip.nw_proto }}</k-input>
+            <k-input icon="arrow-right" title="nw_tos:" placeholder="nw_tos" :value.sync="ip.nw_tos">{{ ip.nw_tos }}</k-input>
+          </k-accordion-item>
+
+          <k-accordion-item title="TP Parameters">
+            <k-input icon="arrow-right" title="tp_src:" placeholder="tp_src" :value.sync="tp.tp_src">{{ tp.tp_src }}</k-input>
+            <k-input icon="arrow-right" title="tp_dst:" placeholder="tp_dst" :value.sync="tp.tp_dst">{{ tp.tp_dst }}</k-input>
+          </k-accordion-item>                    
+          
+          <div>
+            <k-button icon="search" title="Search" :on_click="get_trace">
+            </k-button>
+          </div>
+
+          <div>
+            <k-button icon="eraser" title="Reset" :on_click="reset_inputs">
+            </k-button>
+          </div>
+
+        </k-accordion-item>
+      </k-accordion>
+    </div>
+  </k-toolbar-item>
+</template>
+
+<script>
+module.exports = {
+  methods: {
+    get_trace() {
+      var self = this
+      self.get_topology()
+      var payload = {
+          trace: {
+              switch: {
+                  dpid: self.dpid,
+                  in_port: parseInt(self.in_port) || ""
+              },
+              eth: {
+                "dl_vlan": parseInt(self.eth.dl_vlan) || "",
+                "dl_type": parseInt(self.eth.dl_type) || "",
+                "dl_src": self.eth.dl_src,
+                "dl_dst": self.eth.dl_dst
+              },
+              ip: {
+                "nw_src": self.ip.nw_src,
+                "nw_dst": self.ip.nw_dst,
+                "ipv6_src": self.ip.ipv6_src,
+                "ipv6_dst": self.ip.ipv6_dst,
+                "nw_proto": parseInt(self.ip.nw_proto) || "",
+                "nw_tos": parseInt(self.ip.nw_tos) || ""
+              },
+              tp: {
+                "tp_src": parseInt(self.tp.tp_src) || "",
+                "tp_dst": parseInt(self.tp.tp_dst) || ""
+              }
+          }
+      }
+      
+      payload.trace.eth = Object.fromEntries(Object.entries(payload.trace.eth).filter(function ([k, v]) {
+                                                                                        return (v != "");
+                                                                                        }));
+      payload.trace.ip = Object.fromEntries(Object.entries(payload.trace.ip).filter(function ([k, v]) {
+                                                                                        return (v != "");
+                                                                                        }));
+      payload.trace.tp = Object.fromEntries(Object.entries(payload.trace.tp).filter(function ([k, v]) {
+                                                                                        return (v != "");
+                                                                                        }));
+      let request = $.ajax({
+          async: true,
+          dataType: "json",
+          type: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify(payload),
+          url: this.$kytos_server_api + "amlight/sdntrace_cp/v1/trace",
+          });
+
+      request.done(function(data) {
+        for (element in data.result){
+          let current_switch = self.switches[data.result[element]["dpid"]]
+          let current_interface = current_switch.interfaces[`${data.result[element]["dpid"]}:${data.result[element]["port"]}`]
+          if (!data.result[element].hasOwnProperty('out')){
+            data.result[element].out = {"port": "NA", "vlan": "NA"};
+          } else if (current_interface.name != undefined && current_interface.name != ""){
+            let current_out_interface = current_switch.interfaces[`${data.result[element]["dpid"]}:${data.result[element]["out"]["port"]}`]
+            data.result[element]["out"]["port"] = current_out_interface["name"]
+          }
+          if (current_switch.metadata.node_name != undefined && current_switch.metadata.node_name != ""){
+            data.result[element]["dpid"] = current_switch.metadata.node_name
+          }
+          if (current_interface.name != undefined && current_interface.name != ""){
+            data.result[element]["port"] = current_interface.name
+          }
+        }
+        self.trace = data;
+        self.show();
+      });
+
+      request.fail(function(data) {
+        let notification = {
+          icon: 'gear',
+          title: 'Bad request',
+          description: data.status + ': ' + data.responseJSON.description
+        };
+        self.$kytos.$emit("setNotification", notification);
+      });
+    },
+    show() {
+      var content = {
+                    "component": 'amlight-sdntrace_cp-k-info-panel-show_trace_results',
+                    "content": this.trace,
+                    "icon": "search-location",
+                    "title": "Trace",
+                    "subtitle": "by amlight/sdntrace_cp"
+                    }
+      this.$kytos.$emit("showInfoPanel", content)
+      },
+    get_topology(){
+      var self = this
+      $.ajax({
+        async: true,
+        dataType: "json",
+        url: this.$kytos_server_api + "kytos/topology/v3",
+
+        success: function(data) {
+          self.switches = data['topology']['switches']
+          self.links = data['topology']['links']
+        }
+      });
+    },
+    reset_inputs() {
+    this.dpid = ""
+    this.in_port = ""
+    this.eth.dl_vlan = ""
+    this.eth.dl_type = ""
+    this.eth.dl_src = ""
+    this.eth.dl_dst = "" 
+    this.ip.nw_src = "" 
+    this.ip.nw_dst = ""
+    this.ip.ipv6_src = ""
+    this.ip.ipv6_dst = ""
+    this.ip.nw_proto = ""
+    this.ip.nw_tos = ""
+    this.tp.tp_src = ""
+    this.tp.tp_dst = ""
+    }
+    },
+    computed: {
+      get_dpids(){
+        var dpids = []
+        $.each(this.switches, function(key, value){
+          if (value.metadata.node_name != undefined && value.metadata.node_name != "") {
+            dpids.push(`${value.metadata.node_name} - ${value.dpid}`)
+          } else if (value.data_path != "None") {
+            dpids.push(`${value.data_path} - ${value.dpid}`)
+          } else {
+            dpids.push(value.dpid)
+          }
+        });
+        this.dpids = dpids; 
+      },
+      get_ports(){
+        current_dpid = this.dpid
+        current_switch = this.switches[current_dpid]
+        var port_numbers = []
+        if (current_switch != undefined && current_switch != "") {
+          $.each(current_switch.interfaces, function(key, value) {
+            if (value.metadata.port_name != undefined && value.metadata.port_name != "") {
+              port_numbers.push(`${value.metadata.port_name} - ${value.port_number}`)
+            } else {
+              port_numbers.push(`${value.name} - ${value.port_number}`)
+            }
+          });
+        } else {
+          port_numbers.push("No DPID Choosen")
+        }
+        this.port_numbers = port_numbers;
+      },
+      onblur_dpids(){
+        let current_dpid = this.dpid
+        if (current_dpid.lastIndexOf(' ') > 0) {
+          this.dpid_display = current_dpid
+          let splitted_dpid = current_dpid.split(' ')
+          this.dpid = splitted_dpid[splitted_dpid.length - 1]
+          let current_switch = this.switches[this.dpid]
+        }
+        this.dpid_display = current_dpid
+        this.port_name = ""
+        this.in_port = ""
+      },
+      onblur_ports(){
+        let current_port = this.in_port
+        if (current_port.lastIndexOf(' ') > 0) {
+          let splitted_port = current_port.split(' ')
+          this.in_port = splitted_port[splitted_port.length-1]
+          this.port_name = splitted_port[0]
+        }
+      }
+    },
+    created(){
+      this.get_topology();
+    },
+    data: function() {
+        return {
+            trace: {},
+            switches: [],
+            dpid: "",
+            dpids: [],
+            in_port: "",
+            port_numbers: [],
+            port_name: "",
+            dpid_display: "",
+            eth: {
+              "dl_vlan": "",
+              "dl_type": "",
+              "dl_src": "",
+              "dl_dst": ""
+              },
+            ip: {
+              "nw_src": "",
+              "nw_dst": "",
+              "ipv6_src": "",
+              "ipv6_dst": "",
+              "nw_proto": "",
+              "nw_tos": ""
+              },
+            tp: {
+              "tp_src": "",
+              "tp_dst": ""
+            }
+          }
+        }
+    }   
+</script>
+<style>
+  .autocomplete-result-list li {
+    white-space: nowrap;
+    margin-right: 100% !important;
+    outline: 0;
+    border: 1px #515151 solid;
+    border-radius: 3px;
+  }
+</style>
