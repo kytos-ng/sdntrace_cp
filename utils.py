@@ -1,5 +1,5 @@
 """Utility functions to be used in this Napp"""
-
+# pylint: disable=consider-using-join
 import ipaddress
 
 import requests

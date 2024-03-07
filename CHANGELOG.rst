@@ -6,6 +6,14 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [UNRELEASED] - Under development
 ********************************
 
+Changed
+=======
+- Updated python environment installation from 3.9 to 3.11
+- Updated test dependencies
+
+[UNRELEASED] - Under development
+********************************
+
 Added
 =====
 - Support "instructions" to perform a match.
