@@ -1,4 +1,5 @@
 """Module to test the main napp file."""
+import asyncio
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -293,9 +294,9 @@ class TestMain:
         assert not result
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace(self, mock_stored_flows, event_loop):
+    async def test_trace(self, mock_stored_flows):
         """Test trace rest call."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = {
             "trace": {
                 "switch": {
@@ -340,9 +341,9 @@ class TestMain:
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace_instructions(self, mock_stored_flows, event_loop):
+    async def test_trace_instructions(self, mock_stored_flows):
         """Test trace rest call with instructions."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = {
             "trace": {
                 "switch": {
@@ -392,9 +393,9 @@ class TestMain:
         assert result[0]["out"] == {"port": 2, "vlan": 200}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_instructions_no_match(self, mock_stored_flows, event_loop):
+    async def test_instructions_no_match(self, mock_stored_flows):
         """Test a no match for trace rest call with instructions."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = {
             "trace": {
                 "switch": {
@@ -437,9 +438,9 @@ class TestMain:
         assert result == []
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces(self, mock_stored_flows, event_loop):
+    async def test_get_traces(self, mock_stored_flows):
         """Test traces rest call."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [{
             "trace": {
                 "switch": {
@@ -484,9 +485,9 @@ class TestMain:
         assert result1[0][0]["out"] == {"port": 2}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces(self, mock_stored_flows, event_loop):
+    async def test_traces(self, mock_stored_flows):
         """Test traces rest call"""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [
                     {
                         "trace": {
@@ -562,9 +563,9 @@ class TestMain:
         assert len(result[2]) == 0
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces_fail(self, mock_stored_flows, event_loop):
+    async def test_traces_fail(self, mock_stored_flows):
         """Test traces with a failed dependency."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         mock_stored_flows.side_effect = HTTPException(424, "failed")
         payload = [{
             "trace": {
@@ -579,9 +580,9 @@ class TestMain:
         assert resp.status_code == 424
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces_with_loop(self, mock_stored_flows, event_loop):
+    async def test_traces_with_loop(self, mock_stored_flows):
         """Test traces rest call"""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [
                     {
                         "trace": {
@@ -625,9 +626,9 @@ class TestMain:
         assert result[0][0]["out"] == {"port": 1, "vlan": 100}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_traces_no_action(self, mock_stored_flows, event_loop):
+    async def test_traces_no_action(self, mock_stored_flows):
         """Test traces rest call for two traces with different switches."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [
             {
                 "trace": {
@@ -686,9 +687,9 @@ class TestMain:
         assert len(result[1]) == 0
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces_untagged(self, mock_stored_flows, event_loop):
+    async def test_get_traces_untagged(self, mock_stored_flows):
         """Test traces rest call."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [{
             "trace": {
                 "switch": {
@@ -770,9 +771,9 @@ class TestMain:
         assert result[1][0]["out"] == {"port": 3}
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_get_traces_any(self, mock_stored_flows, event_loop):
+    async def test_get_traces_any(self, mock_stored_flows):
         """Test traces rest call."""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
         payload = [{
             "trace": {
                 "switch": {
@@ -1018,9 +1019,9 @@ class TestMain:
         assert not resp[2]
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_goto_table_1_switch(self, mock_stored_flows, event_loop):
+    async def test_goto_table_1_switch(self, mock_stored_flows):
         """Test match_and_apply with goto_table"""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
 
         stored_flow1 = {
             "flow": {
@@ -1144,9 +1145,9 @@ class TestMain:
         assert len(result[1]) == 0
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_fail_wrong_goto_table(self, mock_stored_flows, event_loop):
+    async def test_fail_wrong_goto_table(self, mock_stored_flows):
         """Test match_and_apply with goto_table"""
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
 
         stored_flow1 = {
             "flow": {
@@ -1196,7 +1197,7 @@ class TestMain:
         assert resp.status_code == 409
 
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace_goto_table_intra(self, mock_stored_flows, event_loop):
+    async def test_trace_goto_table_intra(self, mock_stored_flows):
         """Test trace rest call.
             Topology:
                 switches: {s1}
@@ -1205,7 +1206,7 @@ class TestMain:
                     s1-eth19 -- s1-eth20
                 }
         """
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
 
         switch = self.napp.controller.switches["00:00:00:00:00:00:00:01"]
 
@@ -1427,7 +1428,7 @@ class TestMain:
 
     # pylint: disable=too-many-statements
     @patch("napps.amlight.sdntrace_cp.main.get_stored_flows")
-    async def test_trace_goto_table_inter(self, mock_stored_flows, event_loop):
+    async def test_trace_goto_table_inter(self, mock_stored_flows):
         """Test trace rest call.
             Topology:
                 switches: {s1, s2}
@@ -1437,7 +1438,7 @@ class TestMain:
                     s2-eth25 -- s2-eth26
                 }
         """
-        self.napp.controller.loop = event_loop
+        self.napp.controller.loop = asyncio.get_running_loop()
 
         switch1 = self.napp.controller.switches["00:00:00:00:00:00:00:01"]
         switch2 = self.napp.controller.switches["00:00:00:00:00:00:00:02"]

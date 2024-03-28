@@ -4,13 +4,13 @@
 #
 #    pip-compile --output-file=requirements/run.txt requirements/run.in
 #
-certifi==2021.10.8
+certifi==2024.2.2
     # via requests
-charset-normalizer==2.0.10
+charset-normalizer==3.3.2
     # via requests
-idna==3.3
+idna==3.6
     # via requests
-requests==2.27.0
+requests==2.31.0
     # via -r requirements/run.in
-urllib3==1.26.7
+urllib3==1.26.18
     # via requests
