@@ -42,14 +42,18 @@
 </template>
 
 <script>
- module.exports = {
-   props: ["content"],
-   methods: {
-    get_data(){
-      if (this.content != undefined && this.content != "")
-      {
-        if (this.content.result != "")
-        {
+module.exports = {
+  props: ["content"],
+  data () {
+     return {
+      trace_results: {},
+      is_empty: false
+     }
+  },
+  methods: {
+    get_data: function() {
+      if (this.content != undefined && this.content != "") {
+        if (this.content.result != "") {
           this.is_empty = false
           this.trace_results = this.content.result
         } else {
@@ -57,11 +61,11 @@
         }
       }
     } 
-   },
-   watch: {
-      content: function() {
-        this.get_data();
-      }
+  },
+  watch: {
+    content: function() {
+      this.get_data();
+    }
   },
   created() {
     this.get_data();
@@ -70,16 +74,10 @@
   mounted() {
     this.$parent.$el.style.width = "calc(100% - 300px)";
   },
-  destroyed() {
+  unmounted() {
     $('.k-info-panel').removeClass('sdntrace_container-k-info-panel');
   },
-   data () {
-     return {
-      trace_results: {},
-      is_empty: false
-     }
-   }
- }
+}
 </script>
 <style>
 .sdntrace-k-info-panel {

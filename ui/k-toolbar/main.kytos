@@ -72,11 +72,41 @@
     </div>
   </k-toolbar-item>
 </template>
- 
+
 <script>
 module.exports = {
+  data: function() {
+    return {
+      trace: {},
+      switches: [],
+      dpid: "",
+      dpids: [],
+      in_port: "",
+      port_numbers: [],
+      port_name: "",
+      dpid_display: "",
+      eth: {
+        "dl_vlan": "",
+        "dl_type": "",
+        "dl_src": "",
+        "dl_dst": ""
+        },
+      ip: {
+        "nw_src": "",
+        "nw_dst": "",
+        "ipv6_src": "",
+        "ipv6_dst": "",
+        "nw_proto": "",
+        "nw_tos": ""
+        },
+      tp: {
+        "tp_src": "",
+        "tp_dst": ""
+      }
+    }
+  },
   methods: {
-    get_trace() {
+    get_trace: function() {
       var self = this
       self.get_topology()
       var payload = {
@@ -154,7 +184,8 @@ module.exports = {
         self.$kytos.eventBus.$emit("setNotification", notification);
       });
     },
-    show() {
+
+    show: function() {
       var content = {
                     "component": 'amlight-sdntrace_cp-k-info-panel-show_trace_results',
                     "content": this.trace,
@@ -164,7 +195,8 @@ module.exports = {
                     }
       this.$kytos.eventBus.$emit("showInfoPanel", content)
     },
-    get_topology(){
+
+    get_topology: function() {
       var self = this
       $.ajax({
         async: true,
@@ -177,7 +209,8 @@ module.exports = {
         }
       });
     },
-    reset_inputs() {
+
+    reset_inputs: function() {
       this.dpid = ""
       this.in_port = ""
       this.eth.dl_vlan = ""
@@ -249,36 +282,6 @@ module.exports = {
   created(){
     this.get_topology();
   },
-    data: function() {
-        return {
-            trace: {},
-            switches: [],
-            dpid: "",
-            dpids: [],
-            in_port: "",
-            port_numbers: [],
-            port_name: "",
-            dpid_display: "",
-            eth: {
-              "dl_vlan": "",
-              "dl_type": "",
-              "dl_src": "",
-              "dl_dst": ""
-              },
-            ip: {
-              "nw_src": "",
-              "nw_dst": "",
-              "ipv6_src": "",
-              "ipv6_dst": "",
-              "nw_proto": "",
-              "nw_tos": ""
-              },
-            tp: {
-              "tp_src": "",
-              "tp_dst": ""
-            }
-          }
-        }
 }   
 </script>
 <style>
