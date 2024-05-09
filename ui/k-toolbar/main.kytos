@@ -56,7 +56,7 @@
             <k-input icon="arrow-right" title="tp_src:" placeholder="tp_src" v-model:value="tp.tp_src">{{ tp.tp_src }}</k-input>
             <k-input icon="arrow-right" title="tp_dst:" placeholder="tp_dst" v-model:value="tp.tp_dst">{{ tp.tp_dst }}</k-input>
           </k-accordion-item>                    
-            
+          
           <div>
             <k-button icon="search" title="Search" @click="get_trace">
             </k-button>
@@ -72,7 +72,7 @@
     </div>
   </k-toolbar-item>
 </template>
-
+ 
 <script>
 module.exports = {
   methods: {
@@ -151,7 +151,7 @@ module.exports = {
           title: 'Bad request',
           description: data.status + ': ' + data.responseJSON.description
         };
-        self.$kytos.$emit("setNotification", notification);
+        self.$kytos.eventBus.$emit("setNotification", notification);
       });
     },
     show() {
@@ -162,7 +162,7 @@ module.exports = {
                     "title": "Trace",
                     "subtitle": "by amlight/sdntrace_cp"
                     }
-      this.$kytos.$emit("showInfoPanel", content)
+      this.$kytos.eventBus.$emit("showInfoPanel", content)
     },
     get_topology(){
       var self = this
