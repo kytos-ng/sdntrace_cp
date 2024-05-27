@@ -6,7 +6,7 @@
 
           <k-accordion-item title="Required Switch Parameters">
 
-            <k-input-auto id="dpid" :value.sync="dpid"
+            <k-input-auto id="dpid" v-model:value="dpid"
                       title="DPID:"
                       placeholder="DPID" icon="arrow-right"
                       :candidates="dpids" 
@@ -14,10 +14,10 @@
                       @blur="onblur_dpids"
                       >{{ dpid }}</k-input-auto>
 
-            <k-input class="k-input interface-label" :value.sync="dpid_display" icon="none"
+            <k-input class="k-input interface-label" v-model:value="dpid_display" icon="none"
                       >{{ dpid_display }}</k-input>
 
-            <k-input-auto id="in_port" :value.sync="in_port"
+            <k-input-auto id="in_port" v-model:value="in_port"
                       title="Port:"
                       placeholder="Port" icon="arrow-right"
                       :candidates="port_numbers" 
@@ -25,45 +25,45 @@
                       @blur="onblur_ports"
                       >{{ in_port }}</k-input-auto>
 
-            <k-input class="k-input interface-label" :value.sync="port_name" icon="none"
+            <k-input class="k-input interface-label" v-model:value="port_name" icon="none"
                       >{{ port_name }}</k-input>
 
           </k-accordion-item>
 
           <k-accordion-item title="Eth Parameters">
-            <k-input icon="arrow-right" title="dl_vlan:" placeholder="dl_vlan" :value.sync="eth.dl_vlan">{{ eth.dl_vlan }}</k-input>
-            <k-input icon="arrow-right" title="dl_type:" placeholder="dl_type" :value.sync="eth.dl_type">{{ eth.dl_type }}</k-input>
-            <k-input icon="arrow-right" title="dl_src:" placeholder="dl_src" :value.sync="eth.dl_src">{{ eth.dl_src }}</k-input>
-            <k-input icon="arrow-right" title="dl_dst:" placeholder="dl_dst" :value.sync="eth.dl_dst" >{{ eth.dl_dst }}</k-input>
+            <k-input icon="arrow-right" title="dl_vlan:" placeholder="dl_vlan" v-model:value="eth.dl_vlan">{{ eth.dl_vlan }}</k-input>
+            <k-input icon="arrow-right" title="dl_type:" placeholder="dl_type" v-model:value="eth.dl_type">{{ eth.dl_type }}</k-input>
+            <k-input icon="arrow-right" title="dl_src:" placeholder="dl_src" v-model:value="eth.dl_src">{{ eth.dl_src }}</k-input>
+            <k-input icon="arrow-right" title="dl_dst:" placeholder="dl_dst" v-model:value="eth.dl_dst" >{{ eth.dl_dst }}</k-input>
           </k-accordion-item>
 
           <k-accordion-item title="IP Parameters">
             <k-accordion>
             <k-accordion-item title="IPV4">
-            <k-input icon="arrow-right" title="nw_src:" placeholder="nw_src" :value.sync="ip.nw_src">{{ ip.nw_src }}</k-input>
-            <k-input icon="arrow-right" title="nw_dst:" placeholder="nw_dst" :value.sync="ip.nw_dst">{{ ip.nw_dst }}</k-input>
+            <k-input icon="arrow-right" title="nw_src:" placeholder="nw_src" v-model:value="ip.nw_src">{{ ip.nw_src }}</k-input>
+            <k-input icon="arrow-right" title="nw_dst:" placeholder="nw_dst" v-model:value="ip.nw_dst">{{ ip.nw_dst }}</k-input>
             </k-accordion-item>
             <k-accordion-item title="IPV6">
-            <k-input icon="arrow-right" title="ipv6_src:" placeholder="ipv6_src" :value.sync="ip.ipv6_src">{{ ip.ipv6_src }}</k-input>
-            <k-input icon="arrow-right" title="ipv6_dst:" placeholder="ipv6_dst" :value.sync="ip.ipv6_dst">{{ ip.ipv6_dst }}</k-input>
+            <k-input icon="arrow-right" title="ipv6_src:" placeholder="ipv6_src" v-model:value="ip.ipv6_src">{{ ip.ipv6_src }}</k-input>
+            <k-input icon="arrow-right" title="ipv6_dst:" placeholder="ipv6_dst" v-model:value="ip.ipv6_dst">{{ ip.ipv6_dst }}</k-input>
             </k-accordion-item>
             <k-accordion>
-            <k-input icon="arrow-right" title="nw_proto:" placeholder="nw_proto" :value.sync="ip.nw_proto">{{ ip.nw_proto }}</k-input>
-            <k-input icon="arrow-right" title="nw_tos:" placeholder="nw_tos" :value.sync="ip.nw_tos">{{ ip.nw_tos }}</k-input>
+            <k-input icon="arrow-right" title="nw_proto:" placeholder="nw_proto" v-model:value="ip.nw_proto">{{ ip.nw_proto }}</k-input>
+            <k-input icon="arrow-right" title="nw_tos:" placeholder="nw_tos" v-model:value="ip.nw_tos">{{ ip.nw_tos }}</k-input>
           </k-accordion-item>
 
           <k-accordion-item title="TP Parameters">
-            <k-input icon="arrow-right" title="tp_src:" placeholder="tp_src" :value.sync="tp.tp_src">{{ tp.tp_src }}</k-input>
-            <k-input icon="arrow-right" title="tp_dst:" placeholder="tp_dst" :value.sync="tp.tp_dst">{{ tp.tp_dst }}</k-input>
+            <k-input icon="arrow-right" title="tp_src:" placeholder="tp_src" v-model:value="tp.tp_src">{{ tp.tp_src }}</k-input>
+            <k-input icon="arrow-right" title="tp_dst:" placeholder="tp_dst" v-model:value="tp.tp_dst">{{ tp.tp_dst }}</k-input>
           </k-accordion-item>                    
           
           <div>
-            <k-button icon="search" title="Search" :on_click="get_trace">
+            <k-button icon="search" title="Search" @click="get_trace">
             </k-button>
           </div>
 
           <div>
-            <k-button icon="eraser" title="Reset" :on_click="reset_inputs">
+            <k-button icon="eraser" title="Reset" @click="reset_inputs">
             </k-button>
           </div>
 
@@ -75,6 +75,7 @@
 
 <script>
 module.exports = {
+  props: ["content"],
   methods: {
     get_trace() {
       var self = this
@@ -151,7 +152,7 @@ module.exports = {
           title: 'Bad request',
           description: data.status + ': ' + data.responseJSON.description
         };
-        self.$kytos.$emit("setNotification", notification);
+        self.$kytos.eventBus.$emit("setNotification", notification);
       });
     },
     show() {
@@ -159,10 +160,11 @@ module.exports = {
                     "component": 'amlight-sdntrace_cp-k-info-panel-show_trace_results',
                     "content": this.trace,
                     "icon": "search-location",
+                    "maximized": true,
                     "title": "Trace",
                     "subtitle": "by amlight/sdntrace_cp"
                     }
-      this.$kytos.$emit("showInfoPanel", content)
+      this.$kytos.eventBus.$emit("showInfoPanel", content)
       },
     get_topology(){
       var self = this
