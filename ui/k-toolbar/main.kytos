@@ -159,6 +159,7 @@ module.exports = {
                     "component": 'amlight-sdntrace_cp-k-info-panel-show_trace_results',
                     "content": this.trace,
                     "icon": "search-location",
+                    "maximized": true,
                     "title": "Trace",
                     "subtitle": "by amlight/sdntrace_cp"
                     }
