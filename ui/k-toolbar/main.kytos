@@ -39,15 +39,15 @@
 
           <k-accordion-item title="IP Parameters">
             <k-accordion>
-            <k-accordion-item title="IPV4">
-            <k-input icon="arrow-right" title="nw_src:" placeholder="nw_src" v-model:value="ip.nw_src">{{ ip.nw_src }}</k-input>
-            <k-input icon="arrow-right" title="nw_dst:" placeholder="nw_dst" v-model:value="ip.nw_dst">{{ ip.nw_dst }}</k-input>
-            </k-accordion-item>
-            <k-accordion-item title="IPV6">
-            <k-input icon="arrow-right" title="ipv6_src:" placeholder="ipv6_src" v-model:value="ip.ipv6_src">{{ ip.ipv6_src }}</k-input>
-            <k-input icon="arrow-right" title="ipv6_dst:" placeholder="ipv6_dst" v-model:value="ip.ipv6_dst">{{ ip.ipv6_dst }}</k-input>
-            </k-accordion-item>
-            <k-accordion>
+              <k-accordion-item title="IPV4">
+                <k-input icon="arrow-right" title="nw_src:" placeholder="nw_src" v-model:value="ip.nw_src">{{ ip.nw_src }}</k-input>
+                <k-input icon="arrow-right" title="nw_dst:" placeholder="nw_dst" v-model:value="ip.nw_dst">{{ ip.nw_dst }}</k-input>
+              </k-accordion-item>
+              <k-accordion-item title="IPV6">
+                <k-input icon="arrow-right" title="ipv6_src:" placeholder="ipv6_src" v-model:value="ip.ipv6_src">{{ ip.ipv6_src }}</k-input>
+                <k-input icon="arrow-right" title="ipv6_dst:" placeholder="ipv6_dst" v-model:value="ip.ipv6_dst">{{ ip.ipv6_dst }}</k-input>
+              </k-accordion-item>
+            </k-accordion>
             <k-input icon="arrow-right" title="nw_proto:" placeholder="nw_proto" v-model:value="ip.nw_proto">{{ ip.nw_proto }}</k-input>
             <k-input icon="arrow-right" title="nw_tos:" placeholder="nw_tos" v-model:value="ip.nw_tos">{{ ip.nw_tos }}</k-input>
           </k-accordion-item>
