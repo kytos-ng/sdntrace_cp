@@ -2,41 +2,40 @@
   <div class="sdntrace_container">
     <k-accordion>
       <k-accordion-item title="Trace Results">
-        <k-context-panel v-if="is_empty" title="Empty Result" icon="gear">
-          </k-context-panel>
-            <div v-else class="data_table">
-              <table>
-                <thead>
-                  <tr>
-                    <th rowspan="2">Trace</th>
-                    <th rowspan="2">DPID</th>
-                    <th rowspan="2">Time</th>
-                    <th rowspan="2">Type</th>
-                    <th rowspan="1" colspan="2">Input</th>
-                    <th rowspan="1" colspan="2">Output</th>
-                  </tr>
-                  <tr>
-                    <th>Port</th>
-                    <th>Vlan</th>
-                    <th>Port</th>
-                    <th>Vlan</th>                   
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(item, index) in trace_results">
-                    <td>{{index}}</td>
-                    <td>{{item.dpid}}</td>
-                    <td>{{item.time}}</td>
-                    <td>{{item.type}}</td>
-                    <td>{{item.port}}</td>
-                    <td>{{item.vlan}}</td>
-                    <td>{{item.out.port}}</td>
-                    <td>{{item.out.vlan}}</td>                  
-                  </tr>
-                </tbody>             
-            </table>
-          </div>
-        </k-accordion-item>
+        <k-context-panel v-if="is_empty" title="Empty Result" icon="gear"></k-context-panel>
+        <div v-else class="data_table">
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2">Trace</th>
+                <th rowspan="2">DPID</th>
+                <th rowspan="2">Time</th>
+                <th rowspan="2">Type</th>
+                <th rowspan="1" colspan="2">Input</th>
+                <th rowspan="1" colspan="2">Output</th>
+              </tr>
+              <tr>
+                <th>Port</th>
+                <th>Vlan</th>
+                <th>Port</th>
+                <th>Vlan</th>                   
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in trace_results">
+                <td>{{index}}</td>
+                <td>{{item.dpid}}</td>
+                <td>{{item.time}}</td>
+                <td>{{item.type}}</td>
+                <td>{{item.port}}</td>
+                <td>{{item.vlan}}</td>
+                <td>{{item.out.port}}</td>
+                <td>{{item.out.vlan}}</td>                  
+              </tr>
+            </tbody>             
+          </table>
+        </div>
+      </k-accordion-item>
     </k-accordion>
   </div>
 </template>
@@ -72,7 +71,7 @@ module.exports = {
     $('.k-info-panel:has(.sdntrace_container)').addClass('sdntrace-k-info-panel');
   },
   mounted() {
-    this.$parent.$el.style.width = "calc(100% - 300px)";
+    //this.$parent.$el.style.width = "calc(100% - 300px)";
   },
   unmounted() {
     $('.k-info-panel').removeClass('sdntrace_container-k-info-panel');
