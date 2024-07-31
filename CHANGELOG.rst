@@ -9,6 +9,10 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [2024.1.0] - 2024-07-23
 ***********************
 
+Added
+=====
+- Added UI to sdntrace_cp.
+
 Changed
 =======
 - Updated python environment installation from 3.9 to 3.11
@@ -21,7 +25,6 @@ Added
 =====
 - Support "instructions" to perform a match.
 - Support instruction type `goto_table`.
-- Added UI to sdntrace_cp.
 
 [2023.1.0] - 2023-06-12
 ***********************
