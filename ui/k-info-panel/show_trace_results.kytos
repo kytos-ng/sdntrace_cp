@@ -62,8 +62,11 @@ module.exports = {
     } 
   },
   watch: {
-    content: function() {
-      this.get_data();
+    content: {
+      handler: function() {
+        this.get_data();
+      },
+      deep: true
     }
   },
   created() {
