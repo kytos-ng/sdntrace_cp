@@ -1,7 +1,8 @@
 """Module to test the utils.py file."""
 import pytest
 from unittest.mock import patch, MagicMock
-
+from httpx import RequestError
+from tenacity import RetryError
 from kytos.core.interface import Interface
 from kytos.lib.helpers import get_link_mock
 from napps.amlight.sdntrace_cp import utils, settings
@@ -11,7 +12,7 @@ from napps.amlight.sdntrace_cp import utils, settings
 class TestUtils():
     """Test utils.py functions."""
 
-    @patch("requests.get")
+    @patch("httpx.get")
     def test_get_stored_flows(self, get_mock):
         "Test get_stored_flows"
         response = MagicMock()
@@ -23,6 +24,15 @@ class TestUtils():
         result = utils.get_stored_flows()
         get_mock.assert_called_with(api_url, timeout=20)
         assert result['result'] == "ok"
+
+    @patch("time.sleep")
+    @patch("httpx.get")
+    def test_get_stored_flows_error(self, get_mock, _):
+        """Test retries when get_stored_flows fails"""
+        get_mock.side_effect = RequestError(MagicMock())
+        with pytest.raises(RetryError):
+            utils.get_stored_flows()
+        assert get_mock.call_count == 3
 
     def test_convert_list_entries(self):
         """Verify convert entries with a list of one example"""

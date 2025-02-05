@@ -10,6 +10,10 @@ Changed
 =======
 - Updated watchers
 
+Removed
+=======
+- Removed ``requests`` dependency and using ``httpx`` instead.
+
 Added
 =====
 - Inputs used for display only were disabled

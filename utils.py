@@ -2,10 +2,9 @@
 # pylint: disable=consider-using-join
 import ipaddress
 
-import requests
+import httpx
 from kytos.core.retry import before_sleep
 from napps.amlight.sdntrace_cp import settings
-from requests.exceptions import Timeout
 from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
                       wait_random)
 
@@ -14,7 +13,7 @@ from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
     stop=stop_after_attempt(3),
     wait=wait_random(min=0.1, max=0.2),
     before_sleep=before_sleep,
-    retry=retry_if_exception_type((Timeout, ConnectionError)))
+    retry=retry_if_exception_type((httpx.RequestError, ConnectionError)))
 def get_stored_flows(dpids: list = None, state: str = "installed"):
     """Get stored flows from flow_manager napps."""
     api_url = f'{settings.FLOW_MANAGER_URL}/stored_flows'
@@ -26,7 +25,7 @@ def get_stored_flows(dpids: list = None, state: str = "installed"):
     if state:
         char = '&' if dpids else '/?'
         api_url += char+f'state={state}'
-    result = requests.get(api_url, timeout=20)
+    result = httpx.get(api_url, timeout=20)
     flows_from_manager = result.json()
     return flows_from_manager
 
