@@ -14,7 +14,7 @@
                       @blur="onblur_dpids"
                       >{{ dpid }}</k-input-auto>
 
-            <k-input customClass="k-input interface-label" v-model:value="dpid_display" icon="none" :isDisabled="true"
+            <k-input class="k-input interface-label" v-model:value="dpid_display" icon="none" :isDisabled="true"
                       >{{ dpid_display }}</k-input>
 
             <k-input-auto id="in_port" v-model:value="in_port"
@@ -25,7 +25,7 @@
                       @blur="onblur_ports"
                       >{{ in_port }}</k-input-auto>
 
-            <k-input customClass="k-input interface-label" v-model:value="port_name" icon="none" :isDisabled="true"
+            <k-input class="k-input interface-label" v-model:value="port_name" icon="none" :isDisabled="true"
                       >{{ port_name }}</k-input>
 
           </k-accordion-item>
@@ -199,10 +199,12 @@ module.exports = {
 
     get_topology: function() {
       var self = this
+      console.log(this)
+      console.log(this.$kytos_server_api)
       $.ajax({
         async: true,
         dataType: "json",
-        url: this.$kytos_server_api + "kytos/topology/v3",
+        url: "http://localhost:8181/api/" + "kytos/topology/v3",
 
         success: function(data) {
           self.switches = data['topology']['switches']
