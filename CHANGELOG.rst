@@ -9,6 +9,7 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Changed
 =======
 - Updated watchers
+- Removed customClass
 
 Removed
 =======
