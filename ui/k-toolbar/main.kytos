@@ -199,12 +199,10 @@ module.exports = {
 
     get_topology: function() {
       var self = this
-      console.log(this)
-      console.log(this.$kytos_server_api)
       $.ajax({
         async: true,
         dataType: "json",
-        url: "http://localhost:8181/api/" + "kytos/topology/v3",
+        url: this.$kytos_server_api + "kytos/topology/v3",
 
         success: function(data) {
           self.switches = data['topology']['switches']
