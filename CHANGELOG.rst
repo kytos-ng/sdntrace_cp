@@ -9,7 +9,6 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 Changed
 =======
 - Updated watchers
-- Removed customClass
 
 Removed
 =======
@@ -18,7 +17,6 @@ Removed
 Added
 =====
 - Inputs used for display only were disabled
-- k-inputs now use customClass prop to add CSS classes
 
 [2024.1.0] - 2024-07-23
 ***********************
