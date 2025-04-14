@@ -6,6 +6,9 @@ All notable changes to the sdntrace_cp NApp will be documented in this file.
 [UNRELEASED] - Under development
 ********************************
 
+[2025.1.0] - 2024-04-14
+***********************
+
 Changed
 =======
 - Updated watchers
