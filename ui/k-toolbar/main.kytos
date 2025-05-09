@@ -1,5 +1,5 @@
 <template>
-  <k-toolbar-item icon="search-location" tooltip="Napp sdntrace_cp">
+  <k-toolbar-item name="amlight-sdntrace_cp-k-toolbar-main" icon="search-location" tooltip="Napp sdntrace_cp">
     <div class="scroll">
       <k-accordion>
         <k-accordion-item title="Trace">
